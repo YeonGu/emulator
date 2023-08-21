@@ -7,3 +7,9 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
+#include "memory.h"
+
+static uint8_t prg_rom[PRG_ROM_BLOCKS * 16 * 1024];
+static uint8_t chr_rom[CHR_ROM_BLOCKS * 16 * 1024];
+
+

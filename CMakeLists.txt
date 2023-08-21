@@ -8,4 +8,6 @@ include_directories(inc)
 add_executable(emulator
         inc/rom.h
         src/main.c
-        src/nes-rom.c)
+        src/nes-rom.c
+        src/memory.c
+        inc/memory.h)

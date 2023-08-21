@@ -34,6 +34,9 @@ int read_nes_rom( int argc, char **argv )
     printf( "NES ROM HDR check finished.\n" );
 
     read_rom_info();
+    // FIXME: The Trainer Area follows the 16-byte Header and precedes the PRG-ROM area if bit 2 of Header byte 6 is set.
+    // TODO: Trainer Area load
+
 
     print_rom_info();
 

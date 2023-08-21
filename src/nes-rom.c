@@ -5,8 +5,10 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
+#include "memory.h"
 #include "rom.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 char                 *rom_file;
@@ -37,6 +39,13 @@ int read_nes_rom( int argc, char **argv )
     // FIXME: The Trainer Area follows the 16-byte Header and precedes the PRG-ROM area if bit 2 of Header byte 6 is set.
     // TODO: Trainer Area load
 
+    bool trainer = false;
+
+    fseek( file, trainer ? 16 + 512 : 16, SEEK_SET );
+    init_prg( file, rom_info.prg_size * 16 * 1024 );
+
+    fseek( file, ( trainer ? 16 + 512 : 16 ) + rom_info.prg_size * 16 * 1024, SEEK_SET );
+    init_chr( file, rom_info.chr_size * 16 * 1024 );
 
     print_rom_info();
 

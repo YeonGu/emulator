@@ -30,19 +30,27 @@
 // 7	Flags 7 – Mapper, VS/Playchoice, NES 2.0
 // 8	Flags 8 – PRG-RAM size (rarely used extension)
 // 9	Flags 9 – TV system (rarely used extension)
-//10	Flags 10 – TV system, PRG-RAM presence (unofficial, rarely used extension)
-//11-15	Unused padding (should be filled with zero, but some rippers put their name across bytes 7-15)
-
+// 10	Flags 10 – TV system, PRG-RAM presence (unofficial, rarely used extension)
+// 11-15	Unused padding (should be filled with zero, but some rippers put their name across bytes 7-15)
 
 #include <stdint.h>
 
 struct nes_romhdr_t
 {
-    char ident[4];
-    uint8_t prg_size;
+    char ident[ 4 ];
 
+    uint8_t
+        prg_size,
+        chr_size,
+        flag6,
+        flag7,
+        flag8,
+        flag9,
+        flag10,
+        flag11;      // unused
+    uint32_t unused; // flag 11-15
 };
 
-int read_nes_rom(int argc, char** argv);
+int read_nes_rom( int argc, char **argv );
 
-#endif //EMULATOR_ROM_H
+#endif // EMULATOR_ROM_H

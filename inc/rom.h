@@ -9,30 +9,8 @@
 #define EMULATOR_ROM_H
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-//  From https://www.nesdev.org/wiki/INES
-// An iNES file consists of the following sections, in order:
+//  https://www.nesdev.org/wiki/NES_2.0
 //
-// Header (16 bytes)
-// Trainer, if present (0 or 512 bytes)
-// PRG ROM data (16384 * x bytes)
-// CHR ROM data, if present (8192 * y bytes)
-// PlayChoice INST-ROM, if present (0 or 8192 bytes)
-// PlayChoice PROM, if present (16 bytes Data, 16 bytes CounterOut) (this is often missing; see PC10 ROM-Images for details)
-// Some ROM-Images additionally contain a 128-byte (or sometimes 127-byte) title at the end of the file.
-//
-// The format of the header is as follows:
-//
-// Bytes	Description
-// 0-3	Constant $4E $45 $53 $1A (ASCII "NES" followed by MS-DOS end-of-file)
-// 4	Size of PRG ROM in 16 KB units
-// 5	Size of CHR ROM in 8 KB units (value 0 means the board uses CHR RAM)
-// 6	Flags 6 – Mapper, mirroring, battery, trainer
-// 7	Flags 7 – Mapper, VS/Playchoice, NES 2.0
-// 8	Flags 8 – PRG-RAM size (rarely used extension)
-// 9	Flags 9 – TV system (rarely used extension)
-// 10	Flags 10 – TV system, PRG-RAM presence (unofficial, rarely used extension)
-// 11-15	Unused padding (should be filled with zero, but some rippers put their name across bytes 7-15)
-
 #include <stdint.h>
 
 struct nes_romhdr_t
@@ -40,15 +18,22 @@ struct nes_romhdr_t
     char ident[ 4 ];
 
     uint8_t
-        prg_size,
-        chr_size,
+        prg_size_l,
+        chr_size_l,
         flag6,
         flag7,
         flag8,
-        flag9,
+        rom_size_h,
         flag10,
-        flag11;      // unused
-    uint32_t unused; // flag 11-15
+        chr_ram_size,
+        cpu_ppu_timing,
+        flag13,
+        flag14,
+        flag15;
+};
+struct nes_rom_info_t
+{
+    uint16_t prg_size, chr_size;
 };
 
 int read_nes_rom( int argc, char **argv );

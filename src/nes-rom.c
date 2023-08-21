@@ -9,7 +9,12 @@
 #include <assert.h>
 #include <stdio.h>
 
-char *rom_file;
+char                 *rom_file;
+struct nes_romhdr_t   rom_hdr;
+struct nes_rom_info_t rom_info;
+
+void read_rom_info();
+void print_rom_info();
 
 int read_nes_rom( int argc, char **argv )
 {
@@ -20,15 +25,61 @@ int read_nes_rom( int argc, char **argv )
 
     FILE *file;
 
-    file = fopen( rom_file, "r" );
+    file = fopen( rom_file, "rb+" );
     assert( file );
-    struct nes_romhdr_t hdr;
 
-    fread( &hdr, sizeof( hdr ), 1, file );
-    assert( hdr.ident[ 0 ] == 'N' && hdr.ident[ 1 ] == 'E' && hdr.ident[ 2 ] == 'S' );
+    // Check rom ident
+    fread( &rom_hdr, sizeof( rom_hdr ), 1, file );
+    assert( rom_hdr.ident[ 0 ] == 'N' && rom_hdr.ident[ 1 ] == 'E' && rom_hdr.ident[ 2 ] == 'S' );
     printf( "NES ROM HDR check finished.\n" );
 
-    fclose( file );
+    read_rom_info();
 
+    print_rom_info();
+
+    fclose( file );
     return 0;
+}
+
+void read_rom_info()
+{
+    printf( "%c %c", rom_hdr.prg_size_l, rom_hdr.rom_size_h );
+
+    rom_info.prg_size = rom_hdr.rom_size_h & 0xF;
+    rom_info.prg_size <<= 8;
+    rom_info.prg_size += rom_hdr.prg_size_l;
+
+    rom_info.chr_size = rom_hdr.rom_size_h & 0xF0;
+    rom_info.chr_size <<= 4;
+    rom_info.chr_size += rom_hdr.chr_size_l;
+
+    // If the MSB nibble is $F, an exponent-multiplier notation is used:
+    // The actual PRG-ROM size is 2^E *(MM*2+1) bytes.
+    if ( rom_info.prg_size >= 0xF00 )
+    {
+        int e = ( rom_info.prg_size >> 2 ) & 0b111111;
+        int m = rom_info.prg_size & 0b11;
+
+        rom_info.prg_size = 1;
+        while ( e-- )
+            rom_info.prg_size *= 2;
+        rom_info.prg_size *= ( m * 2 + 1 );
+    }
+    if ( rom_info.chr_size >= 0xF00 )
+    {
+        int e = ( rom_info.chr_size >> 2 ) & 0b111111;
+        int m = rom_info.chr_size & 0b11;
+
+        rom_info.chr_size = 1;
+        while ( e-- )
+            rom_info.chr_size *= 2;
+        rom_info.chr_size *= ( m * 2 + 1 );
+    }
+}
+
+void print_rom_info()
+{
+    printf( "\nTiNES emulator rom loaded:\n" );
+    printf( "   PRG ROM = %d * 16KiB\n", rom_info.prg_size );
+    printf( "   CHR ROM = %d * 8KB\n", rom_info.chr_size );
 }

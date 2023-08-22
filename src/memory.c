@@ -22,6 +22,27 @@ static long    prg_size;
 static long    chr_size;
 
 struct mem_map_t mapper[ 10 ];
+int              nr_mapper;
+
+uint8_t vaddr_read( addr_t addr )
+{
+    for ( int i = nr_mapper - 1; i >= 0; ++i )
+    {
+        if ( mapper[ i ].nes_begin > addr )
+            continue;
+
+        if ( addr >= mapper[ i ].nes_begin + mapper[ i ].map_size )
+        {
+            printf( "out of bound/not implemented.\n" );
+            assert( 0 );
+        }
+
+        return mapper[ i ].map_begin[ addr - mapper[ i ].nes_begin ];
+    }
+    printf( "vaddr read error at %04x!\n", addr );
+    assert( 0 );
+    return 0;
+}
 
 // TODO: init prg/chr fault process
 void init_rom( FILE *file, struct nes_rom_info_t *info )
@@ -73,12 +94,14 @@ void init_mapper( struct nes_rom_info_t *info )
     //      $6000–$7FFF: Battery-backed save or work RAM
     //      $8000–$FFFF: ROM and mapper registers (see MMC1 and UxROM for examples)
     NEW_MAP( 6, "sram", 0x6000, 0x2000, sram );
+    nr_mapper = 7;
 
     switch ( info->mapper )
     {
     case 0: // https://www.nesdev.org/wiki/NROM
         NEW_MAP( 7, "prg_rom_0", 0x8000, 0x4000, prg_rom_0 );
         NEW_MAP( 8, "prg_rom_1", 0xC000, 0x4000, ( info->prg_size == 2 ) ? prg_rom_1 : prg_rom_0 );
+        nr_mapper += 2;
         break;
 
     default:
@@ -86,5 +109,8 @@ void init_mapper( struct nes_rom_info_t *info )
         assert( 0 );
     }
 
-    printf("Mapper init finished.\n");
+    addr_t RESET = (vaddr_read( 0xFFFD ) << 8) + vaddr_read( 0xFFFC );
+    printf("reset vector at 0x%04x\n", RESET);
+
+    printf( "Mapper init finished.\n" );
 }

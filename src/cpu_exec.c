@@ -15,6 +15,8 @@ void cpu_exec_once();
 void cpu_exec();
 
 //////////////////////////////////////////////////////////////////////
+//  inst handlers of all opcodes
+
 void INST_IMPLICIT_HANDLER()
 {
 }
@@ -26,3 +28,14 @@ void INST_IMPLICIT_HANDLER()
 static struct cpu_6502_inst_t inst[ 256 ] = {
     INSTPAT( "BRK", 0x00, IMPLICIT ),
 };
+
+//////////////////////////////////////////////////////////////////////
+void cpu_exec_once()
+{
+    uint8_t opcode = vaddr_read( cpu.pc );
+    inst[ opcode ].inst_handler();
+}
+
+void cpu_exec()
+{
+}

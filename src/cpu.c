@@ -17,4 +17,5 @@ extern addr_t            RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
  * */
 void init_cpu()
 {
+    printf( "CPU init...\n" );
 }

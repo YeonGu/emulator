@@ -11,4 +11,5 @@ add_executable(emulator
         src/nes-rom.c
         src/memory.c
         inc/memory.h
-        src/mapper.c)
+        src/cpu.c
+        inc/cpu.h)

@@ -3,9 +3,10 @@
 //          Southeast University.
 //  Created by Gu Yuhang on 2023/8/22
 //
-//  mapper.c
+//  cpu.c
 //
 ///////////////////////////////////////////////////////////////////////
 
-#include "memory.h"
+#include <cpu.h>
 
+static struct cpu_6502_t cpu = {};

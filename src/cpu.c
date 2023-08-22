@@ -9,13 +9,12 @@
 
 #include <cpu.h>
 
-static struct cpu_6502_t cpu = {};
-extern addr_t RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
+extern struct cpu_6502_t cpu;
+extern addr_t            RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 
 /**
  * CPU Power on
  * */
-void init_cpu(){
-
+void init_cpu()
+{
 }
-

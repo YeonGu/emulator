@@ -12,6 +12,9 @@
 #include <memory.h>
 #include <stdint.h>
 
+void init_cpu();
+void cpu_exec();
+
 // https://www.nesdev.org/obelisk-6502-guide/registers.html#N
 struct cpu_6502_t
 {
@@ -39,8 +42,6 @@ struct cpu_6502_t
     } status_reg;
 };
 
-void init_cpu();
-
 #define ADDMODE( mode ) ADDR_MODE_##mode
 enum
 {
@@ -58,14 +59,13 @@ enum
     ADDR_MODE_INDEXED_INDIRECT,
     ADDR_MODE_INDIRECT_INDEXED,
 };
+
 struct cpu_6502_inst_t
 {
     char *name;
     int   addr_mode;
-    void ( *inst_handler )( struct cpu_6502_t *cpu );
+    void ( *inst_handler )();
     uint8_t opcode;
 };
-
-#define INSTPAT( opcode, )
 
 #endif // EMULATOR_CPU_H

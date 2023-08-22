@@ -12,4 +12,5 @@ add_executable(emulator
         src/memory.c
         inc/memory.h
         src/cpu.c
-        inc/cpu.h)
+        inc/cpu.h
+        src/cpu_exec.c)

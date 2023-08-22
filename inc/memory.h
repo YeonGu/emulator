@@ -14,10 +14,17 @@
 
 #define addr_t uint16_t
 
-//void init_prg( FILE *file, long prg_blocks );
-//void init_chr( FILE *file, long chr_blocks );
-void init_rom( FILE *file, struct nes_rom_info_t *info );
+struct mem_map_t
+{
+    char    *name;
+    uint8_t *begin;
+    addr_t   map_base;
+    uint16_t size;
+};
 
+void init_rom( FILE *file, struct nes_rom_info_t *info );
 void init_mapper( struct nes_rom_info_t *info );
+
+uint8_t vaddr_read( addr_t addr );
 
 #endif // EMULATOR_MEMORY_H

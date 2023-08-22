@@ -6,11 +6,13 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "../inc/rom.h"
+#include <cpu.h>
 #include <stdio.h>
 
-int main(int argc, char *argv[])
+int main( int argc, char *argv[] )
 {
-    read_nes_rom(argc, argv);
-//    printf("Hello!");
+    read_nes_rom( argc, argv ); // Load ROM and INTERRUPT VECTORS ( nes_rom.c -> memory.c ); Init mapper
+    init_cpu();                 // Init CPU (RESET vector)
+
     return 0;
 }

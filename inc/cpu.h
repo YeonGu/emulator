@@ -24,4 +24,6 @@ struct cpu_6502_t
         status;
 };
 
+void init_cpu();
+
 #endif // EMULATOR_CPU_H

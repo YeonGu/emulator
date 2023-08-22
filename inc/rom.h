@@ -34,9 +34,10 @@ struct nes_romhdr_t
 struct nes_rom_info_t
 {
     uint16_t prg_size, chr_size;
-    int mapper;
+    int      mapper;
 };
 
-int read_nes_rom( int argc, char **argv );
+int  read_nes_rom( int argc, char **argv );
+void print_rom_info();
 
 #endif // EMULATOR_ROM_H

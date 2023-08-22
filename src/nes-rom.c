@@ -63,7 +63,7 @@ void read_rom_info()
     rom_info.chr_size += rom_hdr.chr_size_l;
 
     // If the MSB nibble is $F, an exponent-multiplier notation is used:
-    // The actual PRG-ROM size is 2^E *(MM*2+1) bytes.
+    // The actual PRG-ROM map_size is 2^E *(MM*2+1) bytes.
     if ( rom_info.prg_size >= 0xF00 )
     {
         int e = ( rom_info.prg_size >> 2 ) & 0b111111;

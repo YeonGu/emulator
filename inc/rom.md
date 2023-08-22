@@ -6,8 +6,8 @@ Offset Meaning
 --------------
 0-3    Identification String. Must be "NES<EOF>".
 
-4      PRG-ROM size LSB
-5      CHR-ROM size LSB
+4      PRG-ROM map_size LSB
+5      CHR-ROM map_size LSB
 
 6      Flags 6
 D~7654 3210
@@ -46,31 +46,31 @@ SSSS NNNN
 |||| ++++- Mapper number D8..D11
 ++++------ Submapper number
 
-9      PRG-ROM/CHR-ROM size MSB
+9      PRG-ROM/CHR-ROM map_size MSB
 D~7654 3210
 ---------
 CCCC PPPP
-|||| ++++- PRG-ROM size MSB
-++++------ CHR-ROM size MSB
+|||| ++++- PRG-ROM map_size MSB
+++++------ CHR-ROM map_size MSB
 
-10     PRG-RAM/EEPROM size
+10     PRG-RAM/EEPROM map_size
 D~7654 3210
 ---------
 pppp PPPP
 |||| ++++- PRG-RAM (volatile) shift count
 ++++------ PRG-NVRAM/EEPROM (non-volatile) shift count
 If the shift count is zero, there is no PRG-(NV)RAM.
-If the shift count is non-zero, the actual size is
+If the shift count is non-zero, the actual map_size is
 "64 << shift count" bytes, i.e. 8192 bytes for a shift count of 7.
 
-11     CHR-RAM size
+11     CHR-RAM map_size
 D~7654 3210
 ---------
 cccc CCCC
-|||| ++++- CHR-RAM size (volatile) shift count
-++++------ CHR-NVRAM size (non-volatile) shift count
+|||| ++++- CHR-RAM map_size (volatile) shift count
+++++------ CHR-NVRAM map_size (non-volatile) shift count
 If the shift count is zero, there is no CHR-(NV)RAM.
-If the shift count is non-zero, the actual size is
+If the shift count is non-zero, the actual map_size is
 "64 << shift count" bytes, i.e. 8192 bytes for a shift count of 7.
 
 12     CPU/PPU Timing

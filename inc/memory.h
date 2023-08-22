@@ -16,10 +16,10 @@
 
 struct mem_map_t
 {
-    char    *name;
-    uint8_t *begin;
-    addr_t   map_base;
-    uint16_t size;
+    char    *map_name;
+    uint8_t *map_begin;
+    addr_t   nes_begin;
+    uint16_t map_size;
 };
 
 void init_rom( FILE *file, struct nes_rom_info_t *info );

@@ -33,7 +33,7 @@ int read_nes_rom( int argc, char **argv )
     // Check rom ident
     fread( &rom_hdr, sizeof( rom_hdr ), 1, file );
     assert( rom_hdr.ident[ 0 ] == 'N' && rom_hdr.ident[ 1 ] == 'E' && rom_hdr.ident[ 2 ] == 'S' );
-    printf( "NES ROM HDR check finished.\n" );
+    printf( "NES ROM HDR check finished.\n\n" );
 
     read_rom_info();
     // FIXME: The Trainer Area follows the 16-byte Header and precedes the PRG-ROM area if bit 2 of Header byte 6 is set.
@@ -42,10 +42,10 @@ int read_nes_rom( int argc, char **argv )
     bool trainer = false;
 
     fseek( file, trainer ? 16 + 512 : 16, SEEK_SET );
-    init_prg( file, rom_info.prg_size * 16 * 1024 );
-
-    fseek( file, ( trainer ? 16 + 512 : 16 ) + rom_info.prg_size * 16 * 1024, SEEK_SET );
-    init_chr( file, rom_info.chr_size * 16 * 1024 );
+    init_rom( file, &rom_info );
+    //    init_prg( file, rom_info.prg_size );
+    //    init_chr( file, rom_info.chr_size );
+    //    fseek( file, ( trainer ? 16 + 512 : 16 ) + rom_info.prg_size * 16 * 1024, SEEK_SET );
 
     print_rom_info();
 
@@ -87,6 +87,8 @@ void read_rom_info()
             rom_info.chr_size *= 2;
         rom_info.chr_size *= ( m * 2 + 1 );
     }
+
+    rom_info.mapper = rom_hdr.flag6 >> 4;
 }
 
 void print_rom_info()
@@ -94,4 +96,5 @@ void print_rom_info()
     printf( "\nTiNES emulator rom loaded:\n" );
     printf( "   PRG ROM = %d * 16KiB\n", rom_info.prg_size );
     printf( "   CHR ROM = %d * 8KB\n", rom_info.chr_size );
+    printf( "MAPPER: %d\n", rom_info.mapper );
 }

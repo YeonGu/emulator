@@ -9,10 +9,11 @@
 
 #include "memory.h"
 
+addr_t RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
+
 static uint8_t ram[ 0x0800 ];
 static uint8_t ppu_reg[ 0x0008 ];
 static uint8_t apu_io_reg[ 0x0018 ];
-
 static uint8_t sram[ 0x2000 ];
 
 static uint8_t prg_rom_0[ 1 * 16 * 1024 ];
@@ -109,8 +110,10 @@ void init_mapper( struct nes_rom_info_t *info )
         assert( 0 );
     }
 
-    addr_t RESET = (vaddr_read( 0xFFFD ) << 8) + vaddr_read( 0xFFFC );
-    printf("reset vector at 0x%04x\n", RESET);
+    NMI_VECTOR     = ( vaddr_read( NMI_VECTOR_ADDR + 1 ) << 8 ) + vaddr_read( NMI_VECTOR_ADDR );
+    RESET_VECTOR   = ( vaddr_read( RESET_VECTOR_ADDR + 1 ) << 8 ) + vaddr_read( RESET_VECTOR_ADDR );
+    IRQ_BRK_VECTOR = ( vaddr_read( IRQ_BRK_VECTOR_ADDR + 1 ) << 8 ) + vaddr_read( IRQ_BRK_VECTOR_ADDR );
+    printf( "\nITR Vectors:\n  RESET 0x%04x\n  NMI 0x%04x\n  IRQ/BRK 0x%04x\n", RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR );
 
     printf( "Mapper init finished.\n" );
 }

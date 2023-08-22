@@ -9,8 +9,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define PRG_ROM_BLOCKS 64
-#define CHR_ROM_BLOCKS 16
+#define NMI_VECTOR_ADDR 0xFFFA
+#define RESET_VECTOR_ADDR 0xFFFC
+#define IRQ_BRK_VECTOR_ADDR 0xFFFE
 
 #define addr_t uint16_t
 

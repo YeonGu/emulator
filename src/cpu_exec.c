@@ -12,7 +12,6 @@
 struct cpu_6502_t cpu = {};
 
 void cpu_exec_once();
-void cpu_exec();
 
 //////////////////////////////////////////////////////////////////////
 //  inst handlers of all opcodes
@@ -91,7 +90,7 @@ void HANDLER( INDIRECT )( uint8_t opcode ) {}
 //  (with zero page wrap around) to give the location of the least significant byte of the target address.
 void HANDLER( INDEXED_INDIRECT )( uint8_t opcode ) {}
 
-// Indirect indirect addressing is the most common indirection mode used on the 6502.
+// Indirect index addressing is the most common indirection mode used on the 6502.
 //  In instruction contains the zero page location of the least significant byte of 16 bit address.
 //  The Y register is dynamically added to this value to generated the actual target address for operation.
 void HANDLER( INDIRECT_INDEXED )( uint8_t opcode ) {}
@@ -109,8 +108,4 @@ void cpu_exec_once()
 {
     uint8_t opcode = vaddr_read( cpu.pc );
     inst[ opcode ].inst_handler( opcode );
-}
-
-void cpu_exec()
-{
 }

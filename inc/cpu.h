@@ -42,7 +42,7 @@ struct cpu_6502_t
     } status_reg;
 };
 
-#define ADDMODE( mode ) ADDR_MODE_##mode
+#define ADDRMODE( mode ) ADDR_MODE_##mode
 enum
 {
     ADDR_MODE_IMPLICIT,

@@ -64,7 +64,7 @@ struct cpu_6502_inst_t
 {
     char *name;
     int   addr_mode;
-    void ( *inst_handler )();
+    void ( *inst_handler )( uint8_t opcode );
     uint8_t opcode;
 };
 

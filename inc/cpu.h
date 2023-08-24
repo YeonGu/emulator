@@ -38,8 +38,8 @@ struct cpu_6502_t
             //            uint8_t zero : 1;
             uint8_t overflow : 1;
             uint8_t negative : 1; // D7
-        } status_flags;
-    } status_reg;
+        } flags;
+    } status;
 };
 
 #define ADDRMODE( mode ) ADDR_MODE_##mode

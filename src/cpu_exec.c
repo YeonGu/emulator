@@ -165,7 +165,7 @@ void cpu_exec_once()
             printf( "Unknown ADDR MODE for 0x%02x\n", code );                                                        \
             assert( 0 );                                                                                             \
         }                                                                                                            \
-//        ##__VA_ARGS__; \
+        ##__VA_ARGS__; \
         break;
 
 //    [ opcode ] { inst_name, ADDRMODE( ADDR_MODE ), INST_##ADDR_MODE##_HANDLER, opcode }
@@ -179,12 +179,20 @@ void cpu_decode_exec( uint8_t opcode )
     addr_t  indirect_tmp;
     addr_t  indirect_addr;
 
+    uint8_t ans;
+
+    #define __NOP imm = 0
+    #define __OVERFLOW_ADD2_8( a, b ) ((uint16_t) a + (uint16_t)b)>>8
+    #define __OVERFLOW_ADD3_8( a, b, c ) ((uint16_t) a + (uint16_t)b + (uint16_t)c)>>8
+
     switch ( opcode )
     {
+            // TODO: BRK Interrupt
         INSTPAT( "BRK", 0x00, IMPLICIT );
 
         // ADC - Add with Carry
-        INSTPAT( "ADC", 0x69, IMMEDIATE );
+        INSTPAT( "ADC", 0x69, IMMEDIATE, 
+            ans = cpu.accumulator + imm + cpu.status.flags.carry );
         INSTPAT( "ADC", 0X65, ZEROPAGE );
         INSTPAT( "ADC", 0x75, ZEROPAGE_X );
         INSTPAT( "ADC", 0x6D, ABSOLUTE );

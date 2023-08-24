@@ -9,6 +9,8 @@
 
 #include "configs.h"
 #include <cpu.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 struct cpu_6502_t cpu = {};
@@ -47,8 +49,12 @@ void cpu_exec_once( FILE *file )
 
     // 读取文本，直到碰到新的一行开始
     fgets( buf, 64, file );
-    assert( strcmp( itrace_log, buf ) == 0 );
-
+    if ( strcmp( itrace_log, buf ) != 0 )
+    {
+        printf( "\nDIFFTEST ERROR...\n" );
+        system( "pause" );
+        assert( 0 );
+    }
 #endif
     cpu_decode_exec( opcode );
 }
@@ -66,13 +72,16 @@ void cpu_exec_once( FILE *file )
                   cpu.pc += 2 )                                                                                   \
             CASE( ADDRMODE( ZEROPAGE ),                                                                           \
                   zeropage_addr = vaddr_read( cpu.pc + 1 ),                                                       \
+                  M             = vaddr_read( zeropage_addr );                                                    \
                   cpu.pc += 2 )                                                                                   \
             CASE( ADDRMODE( ZEROPAGE_X ),                                                                         \
                   zeropage_addr = ( vaddr_read( cpu.pc + 1 ) + cpu.x ) & 0x00FF,                                  \
+                  M             = vaddr_read( zeropage_addr );                                                    \
                   cpu.pc += 2 )                                                                                   \
                                                                                                                   \
             CASE( ADDRMODE( ZEROPAGE_Y ),                                                                         \
                   zeropage_addr = ( vaddr_read( cpu.pc + 1 ) + cpu.y ) & 0x00FF,                                  \
+                  M             = vaddr_read( zeropage_addr );                                                    \
                   cpu.pc += 2 )                                                                                   \
                                                                                                                   \
             CASE( ADDRMODE( RELATIVE ),                                                                           \
@@ -81,29 +90,35 @@ void cpu_exec_once( FILE *file )
                                                                                                                   \
             CASE( ADDRMODE( ABSOLUTE ),                                                                           \
                   absolute_addr = vaddr_read( cpu.pc + 1 ) + ( vaddr_read( cpu.pc + 2 ) << 8 ),                   \
+                  M             = vaddr_read( absolute_addr );                                                    \
                   cpu.pc += 3 )                                                                                   \
                                                                                                                   \
             CASE( ADDRMODE( ABSOLUTE_X ),                                                                         \
                   absolute_addr = vaddr_read( cpu.pc + 1 ) + cpu.x + ( vaddr_read( cpu.pc + 2 ) << 8 ),           \
+                  M             = vaddr_read( absolute_addr );                                                    \
                   cpu.pc += 3 )                                                                                   \
                                                                                                                   \
             CASE( ADDRMODE( ABSOLUTE_Y ),                                                                         \
                   absolute_addr = vaddr_read( cpu.pc + 1 ) + cpu.y + ( vaddr_read( cpu.pc + 2 ) << 8 ),           \
+                  M             = vaddr_read( absolute_addr );                                                    \
                   cpu.pc += 3 )                                                                                   \
                                                                                                                   \
             CASE( ADDRMODE( INDIRECT ),                                                                           \
                   indirect_tmp  = vaddr_read( cpu.pc + 1 ) + ( vaddr_read( cpu.pc + 2 ) << 8 ),                   \
                   indirect_addr = vaddr_read( indirect_tmp ) + ( vaddr_read( indirect_tmp + 1 ) << 8 ),           \
+                  M             = vaddr_read( indirect_addr );                                                    \
                   cpu.pc += 3 )                                                                                   \
                                                                                                                   \
             CASE( ADDRMODE( INDEXED_INDIRECT ),                                                                   \
                   indirect_tmp  = ( vaddr_read( cpu.pc + 1 ) + cpu.x ) & 0x00FF,                                  \
                   indirect_addr = vaddr_read( indirect_tmp ) + ( vaddr_read( indirect_tmp + 1 ) << 8 ),           \
+                  M             = vaddr_read( indirect_addr );                                                    \
                   cpu.pc += 2 )                                                                                   \
                                                                                                                   \
             CASE( ADDRMODE( INDIRECT_INDEXED ),                                                                   \
                   zeropage_addr = vaddr_read( cpu.pc + 1 ),                                                       \
                   indirect_addr = vaddr_read( zeropage_addr ) + cpu.y + ( vaddr_read( zeropage_addr + 1 ) << 8 ), \
+                  M             = vaddr_read( indirect_addr );                                                    \
                   cpu.pc += 2 )                                                                                   \
         default:                                                                                                  \
             printf( "Unknown ADDR MODE for 0x%02x\n", code );                                                     \
@@ -128,12 +143,16 @@ void cpu_exec_once( FILE *file )
 #define SET_OVERFLOW_( ans, a, b ) OVERFLOW_ = OVERFLOW_2_8_( ans, a, b )
 #define SET_NEGATIVE_( a ) NEGATIVE_ = ( a >> 7 )
 
+#define STACK_POP_ vaddr_read( cpu.sp++ )
+#define STACK_PUSH_( data ) vaddr_write( --cpu.sp, data )
+
 void cpu_decode_exec( uint8_t opcode )
 {
     addr_t indirect_tmp;
 
     uint8_t imm;
     int8_t  imm_signed;
+    uint8_t M;
     addr_t  zeropage_addr;
     addr_t  relative_addr;
     addr_t  absolute_addr;
@@ -158,14 +177,30 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "ADC", 0x71, INDIRECT_INDEXED );
 
         // AND -
-        INSTPAT( "AND", 0x29, IMMEDIATE );
-        INSTPAT( "AND", 0x25, ZEROPAGE );
-        INSTPAT( "AND", 0x35, ZEROPAGE_X );
-        INSTPAT( "AND", 0x2D, ABSOLUTE );
-        INSTPAT( "AND", 0x3D, ABSOLUTE_X );
-        INSTPAT( "AND", 0x39, ABSOLUTE_Y );
-        INSTPAT( "AND", 0x21, INDEXED_INDIRECT );
-        INSTPAT( "AND", 0x31, INDIRECT_INDEXED );
+        INSTPAT( "AND", 0x29, IMMEDIATE,
+                 cpu.accumulator &= imm,
+                 SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
+        INSTPAT( "AND", 0x25, ZEROPAGE,
+                 cpu.accumulator &= vaddr_read( zeropage_addr ),
+                 SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
+        INSTPAT( "AND", 0x35, ZEROPAGE_X,
+                 cpu.accumulator &= vaddr_read( zeropage_addr ),
+                 SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
+        INSTPAT( "AND", 0x2D, ABSOLUTE,
+                 cpu.accumulator &= vaddr_read( absolute_addr ),
+                 SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
+        INSTPAT( "AND", 0x3D, ABSOLUTE_X,
+                 cpu.accumulator &= vaddr_read( absolute_addr ),
+                 SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
+        INSTPAT( "AND", 0x39, ABSOLUTE_Y,
+                 cpu.accumulator &= vaddr_read( absolute_addr ),
+                 SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
+        INSTPAT( "AND", 0x21, INDEXED_INDIRECT,
+                 cpu.accumulator &= vaddr_read( indirect_addr ),
+                 SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
+        INSTPAT( "AND", 0x31, INDIRECT_INDEXED,
+                 cpu.accumulator &= vaddr_read( indirect_addr ),
+                 SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
 
         // ASL - Arithmetic Shift Left
         INSTPAT( "ASL", 0x0A, ACCUMULATOR );
@@ -174,43 +209,65 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "ASL", 0x0E, ABSOLUTE );
         INSTPAT( "ASL", 0x1E, ABSOLUTE_X );
 
+        // BIT - Bit Test
+        INSTPAT( "BIT", 0x24, ZEROPAGE,
+                 SET_ZERO_( ( vaddr_read( zeropage_addr ) & cpu.accumulator ) ),
+                 SET_NEGATIVE_( vaddr_read( zeropage_addr ) ), OVERFLOW_ = ( vaddr_read( zeropage_addr ) >> 6 ) & 1 );
+        INSTPAT( "BIT", 0x2C, ABSOLUTE,
+                 SET_ZERO_( ( vaddr_read( absolute_addr ) & cpu.accumulator ) ),
+                 SET_NEGATIVE_( vaddr_read( absolute_addr ) ), OVERFLOW_ = vaddr_read( absolute_addr ) >> 6 & 1 );
+
         // BCC - Branch if Carry Clear
-        INSTPAT( "BCC", 0x90, RELATIVE );
+        INSTPAT( "BCC", 0x90, RELATIVE,
+                 cpu.pc += ( CARRY_ ) ? 0 : relative_addr );
         // BCS - Branch if Carry Set
         INSTPAT( "BCS", 0xB0, RELATIVE,
                  cpu.pc += ( CARRY_ ) ? relative_addr : 0 );
         // BEQ - Branch if Equal
-        INSTPAT( "BEQ", 0XF0, RELATIVE );
+        INSTPAT( "BEQ", 0XF0, RELATIVE,
+                 cpu.pc += ( ZERO_ ) ? relative_addr : 0 );
         // BMI - Branch if Minus
-        INSTPAT( "BMI", 0x30, RELATIVE );
+        INSTPAT( "BMI", 0x30, RELATIVE,
+                 cpu.pc += ( NEGATIVE_ ) ? relative_addr : 0 );
         // BNE - Branch if Not Equal
-        INSTPAT( "BNE", 0xD0, RELATIVE );
+        INSTPAT( "BNE", 0xD0, RELATIVE,
+                 cpu.pc += ( !ZERO_ ) ? relative_addr : 0 );
         // BPL - Branch if Positive
-        INSTPAT( "BPL", 0x10, RELATIVE );
-
+        INSTPAT( "BPL", 0x10, RELATIVE,
+                 cpu.pc += ( !NEGATIVE_ ) ? relative_addr : 0 );
         // BVC - Branch if Overflow Clear
-        INSTPAT( "BVC", 0x50, RELATIVE );
-
+        INSTPAT( "BVC", 0x50, RELATIVE,
+                 cpu.pc += ( !OVERFLOW_ ) ? relative_addr : 0 );
         // BVS - Branch if Overflow Set
-        INSTPAT( "BVS", 0x70, RELATIVE );
+        INSTPAT( "BVS", 0x70, RELATIVE,
+                 cpu.pc += ( OVERFLOW_ ) ? relative_addr : 0 );
+
         // CLC - Clear Carry Flag
-        INSTPAT( "CLC", 0x18, IMPLICIT );
+        INSTPAT( "CLC", 0x18, IMPLICIT, CARRY_ = 0 );
         // CLD - Clear Decimal Mode
-        INSTPAT( "CLD", 0xD8, IMPLICIT );
+        INSTPAT( "CLD", 0xD8, IMPLICIT, DEC_ = 0 );
         // CLI - Clear Interrupt Disable
-        INSTPAT( "CLI", 0x58, IMPLICIT );
+        INSTPAT( "CLI", 0x58, IMPLICIT, SET_INTERRUPT_DISABLE_( 0 ) );
         // CLV - Clear Overflow Flag
-        INSTPAT( "CLV", 0xB8, IMPLICIT );
+        INSTPAT( "CLV", 0xB8, IMPLICIT, OVERFLOW_ = 0 );
 
         // CMP - Compare
-        INSTPAT( "CMP", 0xC9, IMMEDIATE );
-        INSTPAT( "CMP", 0xC5, ZEROPAGE );
-        INSTPAT( "CMP", 0xD5, ZEROPAGE_X );
-        INSTPAT( "CMP", 0xCD, ABSOLUTE );
-        INSTPAT( "CMP", 0xDD, ABSOLUTE_X );
-        INSTPAT( "CMP", 0xD9, ABSOLUTE_Y );
-        INSTPAT( "CMP", 0xC1, INDEXED_INDIRECT );
-        INSTPAT( "CMP", 0xD1, INDIRECT_INDEXED );
+        INSTPAT( "CMP", 0xC9, IMMEDIATE,
+                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) imm ), SET_ZERO_( cpu.accumulator - imm ), SET_NEGATIVE_( cpu.accumulator - imm ) );
+        INSTPAT( "CMP", 0xC5, ZEROPAGE,
+                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+        INSTPAT( "CMP", 0xD5, ZEROPAGE_X,
+                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+        INSTPAT( "CMP", 0xCD, ABSOLUTE,
+                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+        INSTPAT( "CMP", 0xDD, ABSOLUTE_X,
+                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+        INSTPAT( "CMP", 0xD9, ABSOLUTE_Y,
+                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+        INSTPAT( "CMP", 0xC1, INDEXED_INDIRECT,
+                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+        INSTPAT( "CMP", 0xD1, INDIRECT_INDEXED,
+                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
 
         // CPX - Compare X Register
         INSTPAT( "CPX", 0xE0, IMMEDIATE );
@@ -234,15 +291,16 @@ void cpu_decode_exec( uint8_t opcode )
         // DEY - Decrement Y Register
         INSTPAT( "DEY", 0x88, IMPLICIT );
 
-        // EOR - Exclusive OR
-        INSTPAT( "EOR", 0x49, IMMEDIATE );
-        INSTPAT( "EOR", 0x45, ZEROPAGE );
-        INSTPAT( "EOR", 0x55, ZEROPAGE_X );
-        INSTPAT( "EOR", 0x4D, ABSOLUTE );
-        INSTPAT( "EOR", 0x5D, ABSOLUTE_X );
-        INSTPAT( "EOR", 0x59, ABSOLUTE_Y );
-        INSTPAT( "EOR", 0x41, INDEXED_INDIRECT );
-        INSTPAT( "EOR", 0x51, INDIRECT_INDEXED );
+// EOR - Exclusive OR
+#define EOR_( A_, M_ ) A_ ^= M_, SET_ZERO_( A_ ), SET_NEGATIVE_( A_ )
+        INSTPAT( "EOR", 0x49, IMMEDIATE, EOR_( cpu.accumulator, imm ) );
+        INSTPAT( "EOR", 0x45, ZEROPAGE, EOR_( cpu.accumulator, imm ) );
+        INSTPAT( "EOR", 0x55, ZEROPAGE_X, EOR_( cpu.accumulator, imm ) );
+        INSTPAT( "EOR", 0x4D, ABSOLUTE, EOR_( cpu.accumulator, imm ) );
+        INSTPAT( "EOR", 0x5D, ABSOLUTE_X, EOR_( cpu.accumulator, imm ) );
+        INSTPAT( "EOR", 0x59, ABSOLUTE_Y, EOR_( cpu.accumulator, imm ) );
+        INSTPAT( "EOR", 0x41, INDEXED_INDIRECT, EOR_( cpu.accumulator, imm ) );
+        INSTPAT( "EOR", 0x51, INDIRECT_INDEXED, EOR_( cpu.accumulator, imm ) );
 
         // INC - Increment Memory
         INSTPAT( "INC", 0xE6, ZEROPAGE );
@@ -266,7 +324,8 @@ void cpu_decode_exec( uint8_t opcode )
                  vaddr_write( --cpu.sp, cpu.pc >> 8 ), vaddr_write( --cpu.sp, cpu.pc ), cpu.pc = absolute_addr );
 
         // LDA - Load Accumulator
-        INSTPAT( "LDA", 0xA9, IMMEDIATE );
+        INSTPAT( "LDA", 0xA9, IMMEDIATE,
+                 cpu.accumulator = imm, SET_ZERO_( imm ), SET_NEGATIVE_( imm ) );
         INSTPAT( "LDA", 0xA5, ZEROPAGE );
         INSTPAT( "LDA", 0xB5, ZEROPAGE_X );
         INSTPAT( "LDA", 0xAD, ABSOLUTE );
@@ -301,27 +360,27 @@ void cpu_decode_exec( uint8_t opcode )
         // NOP - No Operation
         INSTPAT( "NOP", 0xEA, IMPLICIT, CPU_NOP_ );
 
-        // ORA - Logical Inclusive OR
-        INSTPAT( "ORA", 0x09, IMMEDIATE );
-        INSTPAT( "ORA", 0x05, ZEROPAGE );
-        INSTPAT( "ORA", 0x15, ZEROPAGE_X );
-        INSTPAT( "ORA", 0x0D, ABSOLUTE );
-        INSTPAT( "ORA", 0x1D, ABSOLUTE_X );
-        INSTPAT( "ORA", 0x19, ABSOLUTE_Y );
-        INSTPAT( "ORA", 0x01, INDEXED_INDIRECT );
-        INSTPAT( "ORA", 0x11, INDIRECT_INDEXED );
+// ORA - Logical Inclusive OR
+#define ORA_( _A, _M ) _A |= _M, SET_ZERO_( _A ), SET_NEGATIVE_( _A )
+        INSTPAT( "ORA", 0x09, IMMEDIATE, ORA_( cpu.accumulator, imm ) );
+        INSTPAT( "ORA", 0x05, ZEROPAGE, ORA_( cpu.accumulator, M ) );
+        INSTPAT( "ORA", 0x15, ZEROPAGE_X, ORA_( cpu.accumulator, M ) );
+        INSTPAT( "ORA", 0x0D, ABSOLUTE, ORA_( cpu.accumulator, M ) );
+        INSTPAT( "ORA", 0x1D, ABSOLUTE_X, ORA_( cpu.accumulator, M ) );
+        INSTPAT( "ORA", 0x19, ABSOLUTE_Y, ORA_( cpu.accumulator, M ) );
+        INSTPAT( "ORA", 0x01, INDEXED_INDIRECT, ORA_( cpu.accumulator, M ) );
+        INSTPAT( "ORA", 0x11, INDIRECT_INDEXED, ORA_( cpu.accumulator, M ) );
 
         // PHA - Push Accumulator
-        INSTPAT( "PHA", 0x48, IMPLICIT );
-
+        INSTPAT( "PHA", 0x48, IMPLICIT, STACK_PUSH_( cpu.accumulator ) );
         // PHP - Push Processor Status
-        INSTPAT( "PHP", 0x08, IMPLICIT );
-
+        INSTPAT( "PHP", 0x08, IMPLICIT, STACK_PUSH_( cpu.status.ps | 0b110000 ) );
         // PLA - Pull Accumulator
-        INSTPAT( "PLA", 0x68, IMPLICIT );
-
+        INSTPAT( "PLA", 0x68, IMPLICIT,
+                 cpu.accumulator = STACK_POP_,
+                 SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
         // PLP - Pull Processor Status
-        INSTPAT( "PLP", 0x28, IMPLICIT );
+        INSTPAT( "PLP", 0x28, IMPLICIT, cpu.status.ps = STACK_POP_ & 0xEF | 0b100000 );
 
         // ROL - Rotate Left
         INSTPAT( "ROL", 0x2A, ACCUMULATOR );
@@ -341,7 +400,9 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "RTI", 0x40, IMPLICIT );
 
         // RTS - Return from Subroutine
-        INSTPAT( "RTS", 0x60, IMPLICIT );
+        INSTPAT( "RTS", 0x60, IMPLICIT,
+                 cpu.pc = vaddr_read( cpu.sp ) + ( (addr_t) vaddr_read( cpu.sp + 1 ) << 8 ),
+                 cpu.sp += 2 );
 
         // SBC - Subtract with Carry
         INSTPAT( "SBC", 0xE9, IMMEDIATE );
@@ -355,15 +416,14 @@ void cpu_decode_exec( uint8_t opcode )
 
         // SEC - Set Carry Flag
         INSTPAT( "SEC", 0x38, IMPLICIT, CARRY_ = 1 );
-
         // SED - Set Decimal Flag
-        INSTPAT( "SED", 0xF8, IMPLICIT );
-
+        INSTPAT( "SED", 0xF8, IMPLICIT, DEC_ = 1 );
         // SEI - Set Interrupt Disable
-        INSTPAT( "SEI", 0x78, IMPLICIT );
+        INSTPAT( "SEI", 0x78, IMPLICIT, SET_INTERRUPT_DISABLE_( 1 ) );
 
         // STA - Store Accumulator
-        INSTPAT( "STA", 0x85, ZEROPAGE );
+        INSTPAT( "STA", 0x85, ZEROPAGE,
+                 vaddr_write( zeropage_addr, cpu.accumulator ) );
         INSTPAT( "STA", 0x95, ZEROPAGE_Y );
         INSTPAT( "STA", 0x8D, ABSOLUTE );
         INSTPAT( "STA", 0x9D, ABSOLUTE_X );

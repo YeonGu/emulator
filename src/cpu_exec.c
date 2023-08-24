@@ -253,31 +253,33 @@ void cpu_decode_exec( uint8_t opcode )
 
         // CMP - Compare
         INSTPAT( "CMP", 0xC9, IMMEDIATE,
-                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) imm ), SET_ZERO_( cpu.accumulator - imm ), SET_NEGATIVE_( cpu.accumulator - imm ) );
+                 CARRY_ = ( cpu.accumulator >= imm ), SET_ZERO_( cpu.accumulator - imm ), SET_NEGATIVE_( cpu.accumulator - imm ) );
         INSTPAT( "CMP", 0xC5, ZEROPAGE,
-                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+                 CARRY_ = ( cpu.accumulator >= M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
         INSTPAT( "CMP", 0xD5, ZEROPAGE_X,
-                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+                 CARRY_ = ( cpu.accumulator >= M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
         INSTPAT( "CMP", 0xCD, ABSOLUTE,
-                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+                 CARRY_ = ( cpu.accumulator >= M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
         INSTPAT( "CMP", 0xDD, ABSOLUTE_X,
-                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+                 CARRY_ = ( cpu.accumulator >= M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
         INSTPAT( "CMP", 0xD9, ABSOLUTE_Y,
-                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+                 CARRY_ = ( cpu.accumulator >= M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
         INSTPAT( "CMP", 0xC1, INDEXED_INDIRECT,
-                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+                 CARRY_ = ( cpu.accumulator >= M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
         INSTPAT( "CMP", 0xD1, INDIRECT_INDEXED,
-                 CARRY_ = ( (int8_t) cpu.accumulator >= (int8_t) M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
+                 CARRY_ = ( cpu.accumulator >= M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
 
         // CPX - Compare X Register
-        INSTPAT( "CPX", 0xE0, IMMEDIATE );
-        INSTPAT( "CPX", 0xE4, ZEROPAGE );
-        INSTPAT( "CPX", 0xEC, ABSOLUTE );
+#define CPX_( M_ ) CARRY_ = ( cpu.x >= M_ ), SET_ZERO_( cpu.x - M_ ), SET_NEGATIVE_( cpu.x - M_ )
+        INSTPAT( "CPX", 0xE0, IMMEDIATE, CPX_( M ) );
+        INSTPAT( "CPX", 0xE4, ZEROPAGE, CPX_( M ) );
+        INSTPAT( "CPX", 0xEC, ABSOLUTE, CPX_( M ) );
 
-        // CPY - Compare Y Register
-        INSTPAT( "CPY", 0xC0, IMMEDIATE );
-        INSTPAT( "CPY", 0xC4, ZEROPAGE );
-        INSTPAT( "CPY", 0xCC, ABSOLUTE );
+// CPY - Compare Y Register
+#define CPY_( M_ ) CARRY_ = ( cpu.y >= M_ ), SET_ZERO_( cpu.y - M_ ), SET_NEGATIVE_( cpu.y - M_ )
+        INSTPAT( "CPY", 0xC0, IMMEDIATE, CPY_( M ) );
+        INSTPAT( "CPY", 0xC4, ZEROPAGE, CPY_( M ) );
+        INSTPAT( "CPY", 0xCC, ABSOLUTE, CPY_( M ) );
 
         // DEC - Decrement Memory
         INSTPAT( "DEC", 0xC6, ZEROPAGE );
@@ -343,12 +345,13 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "LDX", 0xAE, ABSOLUTE );
         INSTPAT( "LDX", 0xBE, ABSOLUTE_Y );
 
-        // LDY - Load Y Register
-        INSTPAT( "LDY", 0xA0, IMMEDIATE );
-        INSTPAT( "LDY", 0xA4, ZEROPAGE );
-        INSTPAT( "LDY", 0xB4, ZEROPAGE_X );
-        INSTPAT( "LDY", 0xAC, ABSOLUTE );
-        INSTPAT( "LDY", 0xBC, ABSOLUTE_X );
+// LDY - Load Y Register
+#define LDY_( M_ ) cpu.y = M_, SET_ZERO_( M_ ), SET_NEGATIVE_( M_ )
+        INSTPAT( "LDY", 0xA0, IMMEDIATE, LDY_( M ) );
+        INSTPAT( "LDY", 0xA4, ZEROPAGE, LDY_( M ) );
+        INSTPAT( "LDY", 0xB4, ZEROPAGE_X, LDY_( M ) );
+        INSTPAT( "LDY", 0xAC, ABSOLUTE, LDY_( M ) );
+        INSTPAT( "LDY", 0xBC, ABSOLUTE_X, LDY_( M ) );
 
         // LSR - Logical Shift Right
         INSTPAT( "LSR", 0x4A, ACCUMULATOR );

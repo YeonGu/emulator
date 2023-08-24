@@ -10,189 +10,132 @@
 #include <cpu.h>
 
 struct cpu_6502_t cpu = {};
+static uint32_t   cycles;
+#define CARRY_ cpu.status.flag.carry
+#define ZERO_ cpu.status.flag.zero
+#define INTR_DIS_ cpu.status.flag.intr_disable
+#define DEC_ cpu.status.flag.decimal
+#define FLAG_B_ cpu.status.flag.flag_b
+#define OVERFLOW_ cpu.status.flag.overflow
+#define NEGATIVE_ cpu.status.flag.negative
 
 void cpu_exec_once();
 
 //////////////////////////////////////////////////////////////////////
-//  inst handlers of all opcodes
-#define HANDLER( mode ) INST_##mode##_HANDLER
+
+static struct cpu_6502_inst_t inst[ 256 ] = {};
 #define CASE( a, ... ) \
     case a:            \
         __VA_ARGS__;   \
         break;
 
-// For many 6502 instructions the source and destination
-//  of the information to be manipulated is IMPLICIT directly
-//  by the function of the instruction itself and
-//  no further operand needs to be specified.
-// Operations like 'Clear Carry Flag' (CLC) and 'Return from Subroutine' (RTS) are implicit.
-void HANDLER( IMPLICIT )( uint8_t opcode ) {}
-
-// Some instructions have an option to operate **directly upon the accumulator**.
-//  The programmer specifies this by using a special operand value, 'A'.
-void HANDLER( ACCUMULATOR )( uint8_t opcode ) {}
-
-// Immediate addressing allows the programmer to
-// **directly specify an 8 bit constant within the instruction.**
-void HANDLER( IMMEDIATE )( uint8_t opcode ) {}
-
-// An instruction using zero page addressing mode
-//  has only an 8 bit address operand.
-//  This limits it to addressing only the first 256 bytes of memory (e.g. $0000 to $00FF)
-//  where the most significant byte of the address is always zero.
-// In zero page mode only the least significant byte of the address is held
-// in the instruction making it shorter by one byte。
-void HANDLER( ZEROPAGE )( uint8_t opcode ) {}
-
-// The address to be accessed by an instruction using indexed zero page addressing
-//  is calculated by taking the 8 bit zero page address from the instruction
-//  and adding the current value of the X register to it.
-//  For example if the X register contains $0F and the instruction LDA $80,
-//  X is executed then the accumulator will be loaded from $008F (e.g. $80 + $0F => $8F).
-// NB:
-//    The address calculation wraps around if the sum of the base address and the register exceed $FF.
-//    (e.g. $80 + $FF => $7F) and not $017F.
-void HANDLER( ZEROPAGE_X )( uint8_t opcode ) {}
-
-// The address to be accessed by an instruction using indexed zero page addressing
-//  is calculated by taking the 8 bit zero page address from the instruction and
-//  adding the current value of the Y register to it.
-//  This mode can only be used with the LDX and STX instructions.
-void HANDLER( ZEROPAGE_Y )( uint8_t opcode ) {}
-
-// Relative addressing mode is used by branch instructions (e.g. BEQ, BNE, etc.)
-//  which contain a signed 8 bit relative offset (e.g. -128 to +127) which
-//  is added to program counter if the condition is true.
-//  As **the program counter itself is incremented during instruction execution by two**
-//  the effective address range for the target instruction must be with -126 to +129 bytes of the branch.
-void HANDLER( RELATIVE )( uint8_t opcode ) {}
-
-// Instructions using absolute addressing contain a full 16 bit address to identify the target location.
-void HANDLER( ABSOLUTE )( uint8_t opcode ) {}
-
-// The address to be accessed by an instruction using X register indexed absolute addressing
-//  is computed by taking the 16 bit address from the instruction
-//  and added the contents of the X register.
-//  For example if X contains $92 then an STA $2000,X instruction will store the accumulator at $2092 (e.g. $2000 + $92).
-void HANDLER( ABSOLUTE_X )( uint8_t opcode ) {}
-
-// The Y register indexed absolute addressing mode is the same as
-//  the previous mode only with the contents of the Y register added to the 16 bit address from the instruction.
-void HANDLER( ABSOLUTE_Y )( uint8_t opcode ) {}
-
-// For example if location $0120 contains $FC and location $0121 contains $BA
-//  then the instruction JMP ($0120) will cause
-//  the next instruction execution to occur at $BAFC (e.g. the contents of $0120 and $0121).
-void HANDLER( INDIRECT )( uint8_t opcode ) {}
-
-// Indexed indirect addressing is normally used in conjunction with a table of address held on zero page.
-//  The address of the table is taken from the instruction and the X register added to it
-//  (with zero page wrap around) to give the location of the least significant byte of the target address.
-void HANDLER( INDEXED_INDIRECT )( uint8_t opcode ) {}
-
-// Indirect index addressing is the most common indirection mode used on the 6502.
-//  In instruction contains the zero page location of the least significant byte of 16 bit address.
-//  The Y register is dynamically added to this value to generated the actual target address for operation.
-void HANDLER( INDIRECT_INDEXED )( uint8_t opcode ) {}
-
-//////////////////////////////////////////////////////////////////////
-
-static struct cpu_6502_inst_t inst[ 256 ] = {};
-
 //////////////////////////////////////////////////////////////////////
 void cpu_decode_exec( uint8_t opcode );
 void cpu_exec_once()
 {
+    addr_t  pc     = cpu.pc;
     uint8_t opcode = vaddr_read( cpu.pc );
+    printf( "%04x\t%02x\tA:%02x X:%02x Y:%02x PS:%02x SP:%02x\n", pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
     //    inst[ opcode ].inst_handler( opcode );
-
     cpu_decode_exec( opcode );
 }
 
 //////////////////////////////////////////////////////////////////////
-#define INSTPAT( inst_name, code, ADDR_MODE )                                                                        \
-    case code:                                                                                                       \
-        switch ( ADDRMODE( ADDR_MODE ) )                                                                             \
-        {                                                                                                            \
-            CASE( ADDRMODE( IMPLICIT ), imm = 0, \
-                  cpu.pc += 1 )                                                                    \
-            CASE( ADDRMODE( ACCUMULATOR ), imm = 0, \
-                  cpu.pc += 1 )                                                                 \
-            CASE( ADDRMODE( IMMEDIATE ), imm = vaddr_read( cpu.pc + 1 ), \
-                  cpu.pc += 2 )                                            \
-            CASE( ADDRMODE( ZEROPAGE ),                                                                              \
-                  zeropage_addr = vaddr_read( cpu.pc + 1 ), \
-                  cpu.pc += 2 )                                                         \
-            CASE( ADDRMODE( ZEROPAGE_X ),                                                                            \
-                  zeropage_addr = ( vaddr_read( cpu.pc + 1 ) + cpu.irx ) & 0x00FF, \
-                  cpu.pc += 2 )                                  \
-                                                                                                                     \
-            CASE( ADDRMODE( ZEROPAGE_Y ),                                                                            \
-                  zeropage_addr = ( vaddr_read( cpu.pc + 1 ) + cpu.iry ) & 0x00FF, \
-                  cpu.pc += 2 )                                  \
-                                                                                                                     \
-            CASE( ADDRMODE( RELATIVE ),                                                                              \
-                  relative_addr = vaddr_read( cpu.pc + 1 ), \
-                  cpu.pc += 2 )                                                         \
-                                                                                                                     \
-            CASE( ADDRMODE( ABSOLUTE ),                                                                              \
-                  absolute_addr = vaddr_read( cpu.pc + 1 ) + ( vaddr_read( cpu.pc + 2 ) << 8 ), \
-                  cpu.pc += 3 )                     \
-                                                                                                                     \
-            CASE( ADDRMODE( ABSOLUTE_X ),                                                                            \
-                  absolute_addr = vaddr_read( cpu.pc + 1 ) + cpu.irx + ( vaddr_read( cpu.pc + 2 ) << 8 ), \
-                  cpu.pc += 3 )           \
-                                                                                                                     \
-            CASE( ADDRMODE( ABSOLUTE_Y ),                                                                            \
-                  absolute_addr = vaddr_read( cpu.pc + 1 ) + cpu.iry + ( vaddr_read( cpu.pc + 2 ) << 8 ), \
-                  cpu.pc += 3 )           \
-                                                                                                                     \
-            CASE( ADDRMODE( INDIRECT ),  \
-                  indirect_tmp = vaddr_read( cpu.pc + 1 ) + ( vaddr_read( cpu.pc + 2 ) << 8 ), \
-                  indirect_addr = vaddr_read( indirect_tmp ) + ( vaddr_read( indirect_tmp + 1 ) << 8 ), \
-                  cpu.pc += 3 )             \
-                                                                                                                     \
-            CASE( ADDRMODE( INDEXED_INDIRECT ),                                                                      \
-                  indirect_tmp  = ( vaddr_read( cpu.pc + 1 ) + cpu.irx ) & 0x00FF,                                   \
-                  indirect_addr = vaddr_read( indirect_tmp ) + ( vaddr_read( indirect_tmp + 1 ) << 8 ), \
-                  cpu.pc += 2 )             \
-                                                                                                                     \
-            CASE( ADDRMODE( INDIRECT_INDEXED ),                                                                      \
-                  zeropage_addr = vaddr_read( cpu.pc + 1 ),                                                          \
-                  indirect_addr = vaddr_read( zeropage_addr ) + cpu.iry + ( vaddr_read( zeropage_addr + 1 ) << 8 ), \
-                  cpu.pc += 2) \
-        default:                                                                                                     \
-            printf( "Unknown ADDR MODE for 0x%02x\n", code );                                                        \
-            assert( 0 );                                                                                             \
-        }                                                                                                            \
-        ##__VA_ARGS__; \
+#define INSTPAT( inst_name, code, ADDR_MODE, ... )                                                                \
+    case code:                                                                                                    \
+        switch ( ADDRMODE( ADDR_MODE ) )                                                                          \
+        {                                                                                                         \
+            CASE( ADDRMODE( IMPLICIT ), imm = 0,                                                                  \
+                  cpu.pc += 1 )                                                                                   \
+            CASE( ADDRMODE( ACCUMULATOR ), imm = 0,                                                               \
+                  cpu.pc += 1 )                                                                                   \
+            CASE( ADDRMODE( IMMEDIATE ), imm = vaddr_read( cpu.pc + 1 ),                                          \
+                  cpu.pc += 2 )                                                                                   \
+            CASE( ADDRMODE( ZEROPAGE ),                                                                           \
+                  zeropage_addr = vaddr_read( cpu.pc + 1 ),                                                       \
+                  cpu.pc += 2 )                                                                                   \
+            CASE( ADDRMODE( ZEROPAGE_X ),                                                                         \
+                  zeropage_addr = ( vaddr_read( cpu.pc + 1 ) + cpu.x ) & 0x00FF,                                  \
+                  cpu.pc += 2 )                                                                                   \
+                                                                                                                  \
+            CASE( ADDRMODE( ZEROPAGE_Y ),                                                                         \
+                  zeropage_addr = ( vaddr_read( cpu.pc + 1 ) + cpu.y ) & 0x00FF,                                  \
+                  cpu.pc += 2 )                                                                                   \
+                                                                                                                  \
+            CASE( ADDRMODE( RELATIVE ),                                                                           \
+                  relative_addr = vaddr_read( cpu.pc + 1 ),                                                       \
+                  cpu.pc += 2 )                                                                                   \
+                                                                                                                  \
+            CASE( ADDRMODE( ABSOLUTE ),                                                                           \
+                  absolute_addr = vaddr_read( cpu.pc + 1 ) + ( vaddr_read( cpu.pc + 2 ) << 8 ),                   \
+                  cpu.pc += 3 )                                                                                   \
+                                                                                                                  \
+            CASE( ADDRMODE( ABSOLUTE_X ),                                                                         \
+                  absolute_addr = vaddr_read( cpu.pc + 1 ) + cpu.x + ( vaddr_read( cpu.pc + 2 ) << 8 ),           \
+                  cpu.pc += 3 )                                                                                   \
+                                                                                                                  \
+            CASE( ADDRMODE( ABSOLUTE_Y ),                                                                         \
+                  absolute_addr = vaddr_read( cpu.pc + 1 ) + cpu.y + ( vaddr_read( cpu.pc + 2 ) << 8 ),           \
+                  cpu.pc += 3 )                                                                                   \
+                                                                                                                  \
+            CASE( ADDRMODE( INDIRECT ),                                                                           \
+                  indirect_tmp  = vaddr_read( cpu.pc + 1 ) + ( vaddr_read( cpu.pc + 2 ) << 8 ),                   \
+                  indirect_addr = vaddr_read( indirect_tmp ) + ( vaddr_read( indirect_tmp + 1 ) << 8 ),           \
+                  cpu.pc += 3 )                                                                                   \
+                                                                                                                  \
+            CASE( ADDRMODE( INDEXED_INDIRECT ),                                                                   \
+                  indirect_tmp  = ( vaddr_read( cpu.pc + 1 ) + cpu.x ) & 0x00FF,                                  \
+                  indirect_addr = vaddr_read( indirect_tmp ) + ( vaddr_read( indirect_tmp + 1 ) << 8 ),           \
+                  cpu.pc += 2 )                                                                                   \
+                                                                                                                  \
+            CASE( ADDRMODE( INDIRECT_INDEXED ),                                                                   \
+                  zeropage_addr = vaddr_read( cpu.pc + 1 ),                                                       \
+                  indirect_addr = vaddr_read( zeropage_addr ) + cpu.y + ( vaddr_read( zeropage_addr + 1 ) << 8 ), \
+                  cpu.pc += 2 )                                                                                   \
+        default:                                                                                                  \
+            printf( "Unknown ADDR MODE for 0x%02x\n", code );                                                     \
+            assert( 0 );                                                                                          \
+        }                                                                                                         \
+        __VA_ARGS__;                                                                                              \
         break;
 
-//    [ opcode ] { inst_name, ADDRMODE( ADDR_MODE ), INST_##ADDR_MODE##_HANDLER, opcode }
+#define CPU_NOP_ imm = 0
+
+#define CARRY_ADD2_8_( a, b ) ( (uint16_t) a + (uint16_t) b ) >> 8
+#define CARRY_ADD3_8_( a, b, c ) ( (uint16_t) a + (uint16_t) b + (uint16_t) c ) >> 8
+#define OVERFLOW_2_8_( ans, a, b ) ( ( a >> 7 ) == ( b >> 7 ) ) && ( ( a >> 7 ) != ( ans >> 7 ) )
+// #define OVERFLOW_3_8_( ans, a, b ) ( ( a >> 7 ) == ( b >> 7 ) ) && ( ( a >> 7 ) != ( ans >> 7 ) )
+#define IS_NEGATIVE_8( a ) ( a >> 7 )
+
+#define SET_CARRY_2_( a, b ) CARRY_ = CARRY_ADD2_8_( a, b )
+#define SET_CARRY_3_( a, b, c ) CARRY_ = CARRY_ADD3_8_( a, b, c )
+#define SET_ZERO_( a ) ZERO_ = ( a == 0 ) ? 1 : 0
+#define SET_INTERRUPT_DISABLE_( a ) INTR_DIS_ = a
+#define DISABLE_DEC_ DEC_ = 0
+#define SET_OVERFLOW_( ans, a, b ) OVERFLOW_ = OVERFLOW_2_8_( ans, a, b )
+#define SET_NEGATIVE_( a ) NEGATIVE_ = ( a >> 7 )
+
 void cpu_decode_exec( uint8_t opcode )
 {
+    addr_t indirect_tmp;
+
     uint8_t imm;
     int8_t  imm_signed;
     addr_t  zeropage_addr;
     addr_t  relative_addr;
     addr_t  absolute_addr;
-    addr_t  indirect_tmp;
     addr_t  indirect_addr;
 
     uint8_t ans;
 
-    #define __NOP imm = 0
-    #define __OVERFLOW_ADD2_8( a, b ) ((uint16_t) a + (uint16_t)b)>>8
-    #define __OVERFLOW_ADD3_8( a, b, c ) ((uint16_t) a + (uint16_t)b + (uint16_t)c)>>8
-
     switch ( opcode )
     {
-            // TODO: BRK Interrupt
+        // TODO: BRK Interrupt
         INSTPAT( "BRK", 0x00, IMPLICIT );
 
         // ADC - Add with Carry
-        INSTPAT( "ADC", 0x69, IMMEDIATE, 
-            ans = cpu.accumulator + imm + cpu.status.flags.carry );
+        INSTPAT( "ADC", 0x69, IMMEDIATE,
+                 ans = cpu.accumulator + imm + cpu.status.flag.carry );
         INSTPAT( "ADC", 0X65, ZEROPAGE );
         INSTPAT( "ADC", 0x75, ZEROPAGE_X );
         INSTPAT( "ADC", 0x6D, ABSOLUTE );
@@ -300,7 +243,8 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "INY", 0xC8, IMPLICIT );
 
         // JMP - Jump
-        INSTPAT( "JMP", 0x4C, ABSOLUTE );
+        INSTPAT( "JMP", 0x4C, ABSOLUTE,
+                 cpu.pc = absolute_addr );
         INSTPAT( "JMP", 0x6C, INDIRECT );
 
         // JSR - Jump to Subroutine
@@ -317,7 +261,9 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "LDA", 0xB1, INDIRECT_INDEXED );
 
         // LDX - Load X Register
-        INSTPAT( "LDX", 0xA2, IMMEDIATE );
+        INSTPAT( "LDX", 0xA2, IMMEDIATE,
+                 cpu.x = imm,
+                 SET_ZERO_( cpu.x ), SET_NEGATIVE_( cpu.x ) );
         INSTPAT( "LDX", 0xA6, ZEROPAGE );
         INSTPAT( "LDX", 0xB6, ZEROPAGE_Y );
         INSTPAT( "LDX", 0xAE, ABSOLUTE );
@@ -411,13 +357,19 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "STA", 0x91, INDIRECT_INDEXED );
 
         // STX - Store X Register
-        INSTPAT( "STX", 0x86, ZEROPAGE );
-        INSTPAT( "STX", 0x96, ZEROPAGE_Y );
-        INSTPAT( "STX", 0x8E, ABSOLUTE );
+        INSTPAT( "STX", 0x86, ZEROPAGE,
+                 vaddr_write( zeropage_addr, cpu.x ) );
+        INSTPAT( "STX", 0x96, ZEROPAGE_Y,
+                 vaddr_write( zeropage_addr, cpu.x ) );
+        INSTPAT( "STX", 0x8E, ABSOLUTE,
+                 vaddr_write( absolute_addr, cpu.x ) );
         // STY - Store Y Register
-        INSTPAT( "STY", 0x84, ZEROPAGE );
-        INSTPAT( "STY", 0x94, ZEROPAGE_X );
-        INSTPAT( "STY", 0x8C, ABSOLUTE );
+        INSTPAT( "STY", 0x84, ZEROPAGE,
+                 vaddr_write( zeropage_addr, cpu.y ) );
+        INSTPAT( "STY", 0x94, ZEROPAGE_X,
+                 vaddr_write( zeropage_addr, cpu.y ) );
+        INSTPAT( "STY", 0x8C, ABSOLUTE,
+                 vaddr_write( absolute_addr, cpu.y ) );
 
         // TAX - Transfer Accumulator to X
         INSTPAT( "TAX", 0xAA, IMPLICIT );

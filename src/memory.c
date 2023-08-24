@@ -25,24 +25,40 @@ static long    chr_size;
 struct mem_map_t mapper[ 10 ];
 int              nr_mapper;
 
+struct mem_map_t *find_map( addr_t addr );
+
 uint8_t vaddr_read( addr_t addr )
 {
-    for ( int i = nr_mapper - 1; i >= 0; ++i )
+    struct mem_map_t *map = find_map( addr );
+    assert( map );
+    addr_t offset = addr - map->nes_begin;
+
+    return map->map_begin[ offset ];
+}
+void vaddr_write( addr_t addr, uint8_t data )
+{
+    struct mem_map_t *map;
+    assert( map = find_map( addr ) );
+    addr_t offset = addr - map->nes_begin;
+
+    map->map_begin[ offset ] = data;
+}
+
+struct mem_map_t *find_map( addr_t addr )
+{
+    for ( int i = nr_mapper - 1; i >= 0; i-- )
     {
         if ( mapper[ i ].nes_begin > addr )
             continue;
 
         if ( addr >= mapper[ i ].nes_begin + mapper[ i ].map_size )
         {
-            printf( "out of bound/not implemented.\n" );
+            printf( "memory mapping %04x out of bound/not implemented.\n", addr );
             assert( 0 );
         }
-
-        return mapper[ i ].map_begin[ addr - mapper[ i ].nes_begin ];
+        return &mapper[ i ];
     }
-    printf( "vaddr read error at %04x!\n", addr );
-    assert( 0 );
-    return 0;
+    return NULL;
 }
 
 // TODO: init prg/chr fault process

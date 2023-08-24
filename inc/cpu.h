@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 void init_cpu();
-void cpu_exec();
+void cpu_exec( int n );
 
 // https://www.nesdev.org/obelisk-6502-guide/registers.html#N
 struct cpu_6502_t
@@ -21,12 +21,13 @@ struct cpu_6502_t
     addr_t pc;
     uint8_t
         sp,
-        acu,
-        irx,
-        iry;
-    //        status; // TODO: STATUS struct
+        accumulator,
+        x,
+        y;
+    //        ps; // TODO: STATUS struct
+    
     union {
-        uint8_t status;
+        uint8_t ps;
         struct
         {
             uint8_t carry : 1; // D0
@@ -35,10 +36,9 @@ struct cpu_6502_t
             uint8_t decimal : 1; // D3
 
             uint8_t flag_b : 2; // D4
-            //            uint8_t zero : 1;
             uint8_t overflow : 1;
             uint8_t negative : 1; // D7
-        } flags;
+        } flag;
     } status;
 };
 

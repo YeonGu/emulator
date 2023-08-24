@@ -27,5 +27,6 @@ void init_rom( FILE *file, struct nes_rom_info_t *info );
 void init_mapper( struct nes_rom_info_t *info );
 
 uint8_t vaddr_read( addr_t addr );
+void    vaddr_write( addr_t addr, uint8_t data );
 
 #endif // EMULATOR_MEMORY_H

@@ -16,12 +16,11 @@ struct nes_romhdr_t   rom_hdr;
 struct nes_rom_info_t rom_info;
 
 void read_rom_info();
-void print_rom_info();
 
 int read_nes_rom( int argc, char **argv )
 {
     // TODO: get the rom file path...
-    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\mario.nes";
+    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom-fix\\nestest.nes";
     if ( argc == 1 )
         printf( "No file target is given. Use the default mario file.\n" );
 
@@ -43,7 +42,7 @@ int read_nes_rom( int argc, char **argv )
     fseek( file, trainer ? 16 + 512 : 16, SEEK_SET );
 
     init_rom( file, &rom_info );
-    init_mapper(&rom_info);
+    init_mapper( &rom_info );
 
     print_rom_info();
     fclose( file );

@@ -20,8 +20,17 @@ void cpu_exec_once();
 void init_cpu()
 {
     printf( "CPU init...\n" );
+
+    // FIXME: only for TEST!
+    cpu.pc        = 0xC000;
+    cpu.status.ps = 0x24;
+    cpu.sp        = 0xFD;
 }
 
-void cpu_exec()
+void cpu_exec( int n )
 {
+    while ( n-- )
+    {
+        cpu_exec_once();
+    }
 }

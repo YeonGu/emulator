@@ -7,7 +7,9 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
+#include "configs.h"
 #include <cpu.h>
+#include <string.h>
 
 struct cpu_6502_t cpu = {};
 static uint32_t   cycles;
@@ -31,12 +33,23 @@ static struct cpu_6502_inst_t inst[ 256 ] = {};
 
 //////////////////////////////////////////////////////////////////////
 void cpu_decode_exec( uint8_t opcode );
-void cpu_exec_once()
+void cpu_exec_once( FILE *file )
 {
     addr_t  pc     = cpu.pc;
     uint8_t opcode = vaddr_read( cpu.pc );
-    printf( "%04x\t%02x\tA:%02x X:%02x Y:%02x PS:%02x SP:%02x\n", pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
-    //    inst[ opcode ].inst_handler( opcode );
+
+#ifdef CONFIG_DIFFTEST
+    char itrace_log[ 64 ];
+    sprintf( itrace_log, "%04X  %02X    A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
+    //    printf( "%04X  %02X    A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
+    printf( "%s", itrace_log );
+    char buf[ 64 ];
+
+    // 读取文本，直到碰到新的一行开始
+    fgets( buf, 64, file );
+    assert( strcmp( itrace_log, buf ) == 0 );
+
+#endif
     cpu_decode_exec( opcode );
 }
 
@@ -164,7 +177,8 @@ void cpu_decode_exec( uint8_t opcode )
         // BCC - Branch if Carry Clear
         INSTPAT( "BCC", 0x90, RELATIVE );
         // BCS - Branch if Carry Set
-        INSTPAT( "BCS", 0xB0, RELATIVE );
+        INSTPAT( "BCS", 0xB0, RELATIVE,
+                 cpu.pc += ( CARRY_ ) ? relative_addr : 0 );
         // BEQ - Branch if Equal
         INSTPAT( "BEQ", 0XF0, RELATIVE );
         // BMI - Branch if Minus
@@ -248,7 +262,8 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "JMP", 0x6C, INDIRECT );
 
         // JSR - Jump to Subroutine
-        INSTPAT( "JSR", 0X20, ABSOLUTE );
+        INSTPAT( "JSR", 0X20, ABSOLUTE,
+                 vaddr_write( --cpu.sp, cpu.pc >> 8 ), vaddr_write( --cpu.sp, cpu.pc ), cpu.pc = absolute_addr );
 
         // LDA - Load Accumulator
         INSTPAT( "LDA", 0xA9, IMMEDIATE );
@@ -284,7 +299,7 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "LSR", 0x5E, ABSOLUTE_X );
 
         // NOP - No Operation
-        INSTPAT( "NOP", 0xEA, IMPLICIT );
+        INSTPAT( "NOP", 0xEA, IMPLICIT, CPU_NOP_ );
 
         // ORA - Logical Inclusive OR
         INSTPAT( "ORA", 0x09, IMMEDIATE );
@@ -339,7 +354,7 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "SBC", 0xF1, INDIRECT_INDEXED );
 
         // SEC - Set Carry Flag
-        INSTPAT( "SEC", 0x38, IMPLICIT );
+        INSTPAT( "SEC", 0x38, IMPLICIT, CARRY_ = 1 );
 
         // SED - Set Decimal Flag
         INSTPAT( "SED", 0xF8, IMPLICIT );

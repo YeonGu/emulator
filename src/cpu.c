@@ -7,8 +7,8 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
+#include <configs.h>
 #include <cpu.h>
-
 extern struct cpu_6502_t cpu;
 extern addr_t            RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 
@@ -29,8 +29,14 @@ void init_cpu()
 
 void cpu_exec( int n )
 {
+    FILE *difftest_file = NULL;
+#ifdef CONFIG_DIFFTEST
+    difftest_file = fopen( "E:\\0 SEU\\2023\\TiNES\\emulator\\difftest\\cputestlog.txt", "r" );
+    assert( difftest_file );
+    printf( "Difftest file loaded.\n" );
+#endif
     while ( n-- )
     {
-        cpu_exec_once();
+        cpu_exec_once( difftest_file );
     }
 }

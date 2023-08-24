@@ -68,7 +68,7 @@ void cpu_exec_once( FILE *file )
                   cpu.pc += 1 )                                                                                   \
             CASE( ADDRMODE( ACCUMULATOR ), imm = 0,                                                               \
                   cpu.pc += 1 )                                                                                   \
-            CASE( ADDRMODE( IMMEDIATE ), imm = vaddr_read( cpu.pc + 1 ),                                          \
+            CASE( ADDRMODE( IMMEDIATE ), imm = vaddr_read( cpu.pc + 1 ), M = imm,                                 \
                   cpu.pc += 2 )                                                                                   \
             CASE( ADDRMODE( ZEROPAGE ),                                                                           \
                   zeropage_addr = vaddr_read( cpu.pc + 1 ),                                                       \
@@ -140,7 +140,7 @@ void cpu_exec_once( FILE *file )
 #define SET_ZERO_( a ) ZERO_ = ( a == 0 ) ? 1 : 0
 #define SET_INTERRUPT_DISABLE_( a ) INTR_DIS_ = a
 #define DISABLE_DEC_ DEC_ = 0
-#define SET_OVERFLOW_( ans, a, b ) OVERFLOW_ = OVERFLOW_2_8_( ans, a, b )
+#define SET_OVERFLOW_( a, b ) OVERFLOW_ = OVERFLOW_2_8_( a + b, a, b )
 #define SET_NEGATIVE_( a ) NEGATIVE_ = ( a >> 7 )
 
 #define STACK_POP_ vaddr_read( cpu.sp++ )
@@ -165,16 +165,16 @@ void cpu_decode_exec( uint8_t opcode )
         // TODO: BRK Interrupt
         INSTPAT( "BRK", 0x00, IMPLICIT );
 
-        // ADC - Add with Carry
-        INSTPAT( "ADC", 0x69, IMMEDIATE,
-                 ans = cpu.accumulator + imm + cpu.status.flag.carry );
-        INSTPAT( "ADC", 0X65, ZEROPAGE );
-        INSTPAT( "ADC", 0x75, ZEROPAGE_X );
-        INSTPAT( "ADC", 0x6D, ABSOLUTE );
-        INSTPAT( "ADC", 0x7D, ABSOLUTE_X );
-        INSTPAT( "ADC", 0x79, ABSOLUTE_Y );
-        INSTPAT( "ADC", 0x61, INDEXED_INDIRECT );
-        INSTPAT( "ADC", 0x71, INDIRECT_INDEXED );
+// ADC - Add with Carry
+#define ADC_( A_, M_, C_ ) ans = cpu.accumulator + ( M_ + CARRY_ ), SET_OVERFLOW_( A_, M_ ), CARRY_ = CARRY_ADD3_8_( A_, M_, C_ ), SET_ZERO_( ans ), SET_NEGATIVE_( ans ), A_ = ans
+        INSTPAT( "ADC", 0x69, IMMEDIATE, ADC_( cpu.accumulator, M, CARRY_ ) );
+        INSTPAT( "ADC", 0X65, ZEROPAGE, ADC_( cpu.accumulator, M, CARRY_ ) );
+        INSTPAT( "ADC", 0x75, ZEROPAGE_X, ADC_( cpu.accumulator, M, CARRY_ ) );
+        INSTPAT( "ADC", 0x6D, ABSOLUTE, ADC_( cpu.accumulator, M, CARRY_ ) );
+        INSTPAT( "ADC", 0x7D, ABSOLUTE_X, ADC_( cpu.accumulator, M, CARRY_ ) );
+        INSTPAT( "ADC", 0x79, ABSOLUTE_Y, ADC_( cpu.accumulator, M, CARRY_ ) );
+        INSTPAT( "ADC", 0x61, INDEXED_INDIRECT, ADC_( cpu.accumulator, M, CARRY_ ) );
+        INSTPAT( "ADC", 0x71, INDIRECT_INDEXED, ADC_( cpu.accumulator, M, CARRY_ ) );
 
         // AND -
         INSTPAT( "AND", 0x29, IMMEDIATE,

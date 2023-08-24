@@ -407,15 +407,16 @@ void cpu_decode_exec( uint8_t opcode )
                  cpu.pc = vaddr_read( cpu.sp ) + ( (addr_t) vaddr_read( cpu.sp + 1 ) << 8 ),
                  cpu.sp += 2 );
 
-        // SBC - Subtract with Carry
-        INSTPAT( "SBC", 0xE9, IMMEDIATE );
-        INSTPAT( "SBC", 0xE5, ZEROPAGE );
-        INSTPAT( "SBC", 0xF5, ZEROPAGE_X );
-        INSTPAT( "SBC", 0xED, ABSOLUTE );
-        INSTPAT( "SBC", 0xFD, ABSOLUTE_X );
-        INSTPAT( "SBC", 0xF9, ABSOLUTE_Y );
-        INSTPAT( "SBC", 0xE1, INDEXED_INDIRECT );
-        INSTPAT( "SBC", 0xF1, INDIRECT_INDEXED );
+// SBC - Subtract with Carry
+#define SBC_( A, M_ ) ans = A - M_ - ( 1 - CARRY_ ), SET_CARRY_2_( A - M_, CARRY_ - 1 ), CARRY_ = ~CARRY_, SET_ZERO_( ans ), SET_OVERFLOW_( A, 0 - M_ ), SET_NEGATIVE_( ans ), A = ans
+        INSTPAT( "SBC", 0xE9, IMMEDIATE, SBC_( cpu.accumulator, M ) );
+        INSTPAT( "SBC", 0xE5, ZEROPAGE, SBC_( cpu.accumulator, M ) );
+        INSTPAT( "SBC", 0xF5, ZEROPAGE_X, SBC_( cpu.accumulator, M ) );
+        INSTPAT( "SBC", 0xED, ABSOLUTE, SBC_( cpu.accumulator, M ) );
+        INSTPAT( "SBC", 0xFD, ABSOLUTE_X, SBC_( cpu.accumulator, M ) );
+        INSTPAT( "SBC", 0xF9, ABSOLUTE_Y, SBC_( cpu.accumulator, M ) );
+        INSTPAT( "SBC", 0xE1, INDEXED_INDIRECT, SBC_( cpu.accumulator, M ) );
+        INSTPAT( "SBC", 0xF1, INDIRECT_INDEXED, SBC_( cpu.accumulator, M ) );
 
         // SEC - Set Carry Flag
         INSTPAT( "SEC", 0x38, IMPLICIT, CARRY_ = 1 );

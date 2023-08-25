@@ -454,23 +454,19 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "STY", 0x8C, ABSOLUTE,
                  vaddr_write( absolute_addr, cpu.y ) );
 
+#define TRANS_( from_, to_ ) to_ = from_, SET_ZERO_( to_ ), SET_NEGATIVE_( to_ )
         // TAX - Transfer Accumulator to X
-        INSTPAT( "TAX", 0xAA, IMPLICIT );
-
+        INSTPAT( "TAX", 0xAA, IMPLICIT, TRANS_( cpu.accumulator, cpu.x ) );
         // TAY - Transfer Accumulator to Y
-        INSTPAT( "TAY", 0xA8, IMPLICIT );
-
+        INSTPAT( "TAY", 0xA8, IMPLICIT, TRANS_( cpu.accumulator, cpu.y ) );
         // TSX - Transfer Stack Pointer to X
-        INSTPAT( "TSX", 0xBA, IMPLICIT );
-
+        INSTPAT( "TSX", 0xBA, IMPLICIT, TRANS_( cpu.sp, cpu.x ) );
         // TXA - Transfer X to Accumulator
-        INSTPAT( "TXA", 0x8A, IMPLICIT );
-
+        INSTPAT( "TXA", 0x8A, IMPLICIT, TRANS_( cpu.x, cpu.accumulator ) );
         // TXS - Transfer X to Stack Pointer
-        INSTPAT( "TXS", 0x9A, IMPLICIT );
-
+        INSTPAT( "TXS", 0x9A, IMPLICIT, TRANS_( cpu.x, cpu.sp ) );
         // TYA - Transfer Y to Accumulator
-        INSTPAT( "TYA", 0x98, IMPLICIT );
+        INSTPAT( "TYA", 0x98, IMPLICIT, TRANS_( cpu.y, cpu.accumulator ) );
 
     default:
         printf( "UNKNOWN OPCODE.\n" );

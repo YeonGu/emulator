@@ -37,7 +37,7 @@ uint8_t vaddr_read( addr_t addr )
 
     //    if ( addr < 0x6000 )
     //    {
-    printf( "\tMTRACE: READ %02x at %04x\n", map->map_begin[ offset ], addr );
+    //    printf( "\tMTRACE: READ %02x at %04x\n", map->map_begin[ offset ], addr );
     //    }
 
     return map->map_begin[ offset ];
@@ -50,7 +50,7 @@ void vaddr_write( addr_t addr, uint8_t data )
 
     //    if ( addr >= 0x0100 )
     //    {
-    printf( "\tMTRACE: WRITE %02x at %04x\n", data, addr );
+    //    printf( "\tMTRACE: WRITE %02x at %04x\n", data, addr );
     //    }
 
     map->map_begin[ offset ] = data;

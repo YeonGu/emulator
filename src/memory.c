@@ -35,6 +35,11 @@ uint8_t vaddr_read( addr_t addr )
     assert( map );
     addr_t offset = addr - map->nes_begin;
 
+    if ( addr < 0x6000 )
+    {
+        printf( "\tMTRACE: READ %02x at %04x\n", map->map_begin[ offset ], addr );
+    }
+
     return map->map_begin[ offset ];
 }
 void vaddr_write( addr_t addr, uint8_t data )
@@ -43,11 +48,10 @@ void vaddr_write( addr_t addr, uint8_t data )
     assert( map = find_map( addr ) );
     addr_t offset = addr - map->nes_begin;
 
-    if ( addr >= 0x0100 )
-    {
-        printf( "MEMORY TRACE: WRITE %02x at %04x\n", data, addr );
-        //        system( "pause" );
-    }
+    //    if ( addr >= 0x0100 )
+    //    {
+    printf( "\tMTRACE: WRITE %02x at %04x\n", data, addr );
+    //    }
 
     map->map_begin[ offset ] = data;
 }

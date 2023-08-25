@@ -15,7 +15,7 @@ int main( int argc, char *argv[] )
     read_nes_rom( argc, argv ); // Load ROM and INTERRUPT VECTORS ( nes_rom.c -> memory.c ); Init mapper
     init_cpu();                 // Init CPU (RESET vector)
 
-    int test_insts = 1000;
+    int test_insts = 1200;
     cpu_exec( test_insts );
 
     printf( "TiNES execution stopped. CPU Tested %d test insts.\n", test_insts );

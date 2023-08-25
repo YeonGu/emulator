@@ -281,17 +281,17 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "CPY", 0xC4, ZEROPAGE, CPY_( M ) );
         INSTPAT( "CPY", 0xCC, ABSOLUTE, CPY_( M ) );
 
-        // DEC - Decrement Memory
-        INSTPAT( "DEC", 0xC6, ZEROPAGE );
-        INSTPAT( "DEC", 0xD6, ZEROPAGE_X );
-        INSTPAT( "DEC", 0xCE, ABSOLUTE );
-        INSTPAT( "DEC", 0xDE, ABSOLUTE_X );
+// DEC - Decrement Memory
+#define DECRM_( addr, M_ ) ans = M_ - 1, vaddr_write( addr, ans ), SET_ZERO_( ans ), SET_NEGATIVE_( ans )
+        INSTPAT( "DEC", 0xC6, ZEROPAGE, DECRM_( zeropage_addr, M ) );
+        INSTPAT( "DEC", 0xD6, ZEROPAGE_X, DECRM_( zeropage_addr, M ) );
+        INSTPAT( "DEC", 0xCE, ABSOLUTE, DECRM_( absolute_addr, M ) );
+        INSTPAT( "DEC", 0xDE, ABSOLUTE_X, DECRM_( absolute_addr, M ) );
 
         // DEX - Decrement X Register
-        INSTPAT( "DEX", 0xCA, IMPLICIT );
-
+        INSTPAT( "DEX", 0xCA, IMPLICIT, cpu.x--, SET_ZERO_( cpu.x ), SET_NEGATIVE_( cpu.x ) );
         // DEY - Decrement Y Register
-        INSTPAT( "DEY", 0x88, IMPLICIT );
+        INSTPAT( "DEY", 0x88, IMPLICIT, cpu.y--, SET_ZERO_( cpu.y ), SET_NEGATIVE_( cpu.y ) );
 
 // EOR - Exclusive OR
 #define EOR_( A_, M_ ) A_ ^= M_, SET_ZERO_( A_ ), SET_NEGATIVE_( A_ )
@@ -311,15 +311,15 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "INC", 0xFE, ABSOLUTE_X );
 
         // INX - Increment X Register
-        INSTPAT( "INX", 0xE8, IMPLICIT );
-
+        INSTPAT( "INX", 0xE8, IMPLICIT, cpu.x++, SET_ZERO_( cpu.x ), SET_NEGATIVE_( cpu.x ) );
         // INY - Increment Y Register
-        INSTPAT( "INY", 0xC8, IMPLICIT );
+        INSTPAT( "INY", 0xC8, IMPLICIT, cpu.y++, SET_ZERO_( cpu.y ), SET_NEGATIVE_( cpu.y ) );
 
         // JMP - Jump
         INSTPAT( "JMP", 0x4C, ABSOLUTE,
                  cpu.pc = absolute_addr );
-        INSTPAT( "JMP", 0x6C, INDIRECT );
+        INSTPAT( "JMP", 0x6C, INDIRECT,
+                 cpu.pc = indirect_addr );
 
         // JSR - Jump to Subroutine
         INSTPAT( "JSR", 0X20, ABSOLUTE,
@@ -408,7 +408,11 @@ void cpu_decode_exec( uint8_t opcode )
                  cpu.sp += 2 );
 
 // SBC - Subtract with Carry
-#define SBC_( A, M_ ) ans = A - M_ - ( 1 - CARRY_ ), SET_CARRY_2_( A - M_, CARRY_ - 1 ), CARRY_ = ~CARRY_, SET_ZERO_( ans ), SET_OVERFLOW_( A, 0 - M_ ), SET_NEGATIVE_( ans ), A = ans
+#define SBC_( A, M_ ) ans       = A - M_ - ( 1 - CARRY_ ),                         \
+                      OVERFLOW_ = ( ( A ^ M_ ) & 0x80 ) && ( ( A ^ ans ) & 0x80 ), \
+                      SET_CARRY_2_( A - M_, CARRY_ - 1 ),                          \
+                      CARRY_ = ~CARRY_, SET_ZERO_( ans ),                          \
+                      SET_NEGATIVE_( ans ), A = ans
         INSTPAT( "SBC", 0xE9, IMMEDIATE, SBC_( cpu.accumulator, M ) );
         INSTPAT( "SBC", 0xE5, ZEROPAGE, SBC_( cpu.accumulator, M ) );
         INSTPAT( "SBC", 0xF5, ZEROPAGE_X, SBC_( cpu.accumulator, M ) );
@@ -472,4 +476,5 @@ void cpu_decode_exec( uint8_t opcode )
         printf( "UNKNOWN OPCODE.\n" );
         assert( 0 );
     }
+    imm = 0;
 }

@@ -446,21 +446,15 @@ void cpu_decode_exec( uint8_t opcode )
         // SEI - Set Interrupt Disable
         INSTPAT( "SEI", 0x78, IMPLICIT, SET_INTERRUPT_DISABLE_( 1 ) );
 
-        // STA - Store Accumulator
-        INSTPAT( "STA", 0x85, ZEROPAGE,
-                 vaddr_write( zeropage_addr, cpu.accumulator ) );
-        INSTPAT( "STA", 0x95, ZEROPAGE_Y,
-                 vaddr_write( zeropage_addr, cpu.accumulator ) );
-        INSTPAT( "STA", 0x8D, ABSOLUTE,
-                 vaddr_write( absolute_addr, cpu.accumulator ) );
-        INSTPAT( "STA", 0x9D, ABSOLUTE_X,
-                 vaddr_write( absolute_addr, cpu.accumulator ) );
-        INSTPAT( "STA", 0x99, ABSOLUTE_Y,
-                 vaddr_write( absolute_addr, cpu.accumulator ) );
-        INSTPAT( "STA", 0x81, INDEXED_INDIRECT,
-                 vaddr_write( indirect_addr, cpu.accumulator ) );
-        INSTPAT( "STA", 0x91, INDIRECT_INDEXED,
-                 vaddr_write( indirect_addr, cpu.accumulator ) );
+// STA - Store Accumulator
+#define STA_( addr ) vaddr_write( addr, cpu.accumulator )
+        INSTPAT( "STA", 0x85, ZEROPAGE, STA_( zeropage_addr ) );
+        INSTPAT( "STA", 0x95, ZEROPAGE_X, STA_( zeropage_addr ) );
+        INSTPAT( "STA", 0x8D, ABSOLUTE, STA_( absolute_addr ) );
+        INSTPAT( "STA", 0x9D, ABSOLUTE_X, STA_( absolute_addr ) );
+        INSTPAT( "STA", 0x99, ABSOLUTE_Y, STA_( absolute_addr ) );
+        INSTPAT( "STA", 0x81, INDEXED_INDIRECT, STA_( indirect_addr ) );
+        INSTPAT( "STA", 0x91, INDIRECT_INDEXED, STA_( indirect_addr ) );
 
         // STX - Store X Register
         INSTPAT( "STX", 0x86, ZEROPAGE,

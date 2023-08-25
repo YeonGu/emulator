@@ -34,17 +34,19 @@ static struct cpu_6502_inst_t inst[ 256 ] = {};
         break;
 
 //////////////////////////////////////////////////////////////////////
+static uint32_t nr_insts_exec;
+
 void cpu_decode_exec( uint8_t opcode );
 void cpu_exec_once( FILE *file )
 {
+    nr_insts_exec++;
     addr_t  pc     = cpu.pc;
     uint8_t opcode = vaddr_read( cpu.pc );
 
 #ifdef CONFIG_DIFFTEST
     char itrace_log[ 64 ];
     sprintf( itrace_log, "%04X  %02X    A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
-    //    printf( "%04X  %02X    A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
-    printf( "%s", itrace_log );
+    printf( "%d  %s", nr_insts_exec, itrace_log );
     char buf[ 64 ];
 
     // 读取文本，直到碰到新的一行开始
@@ -143,8 +145,9 @@ void cpu_exec_once( FILE *file )
 #define SET_OVERFLOW_( a, b ) OVERFLOW_ = OVERFLOW_2_8_( a + b, a, b )
 #define SET_NEGATIVE_( a ) NEGATIVE_ = ( a >> 7 )
 
-#define STACK_POP_ vaddr_read( cpu.sp++ )
-#define STACK_PUSH_( data ) vaddr_write( --cpu.sp, data )
+#define STACKADD( s_ ) s_ + 0x100
+#define STACK_POP_ vaddr_read( STACKADD( ++cpu.sp ) )
+#define STACK_PUSH_( data ) vaddr_write( STACKADD( cpu.sp-- ), data )
 
 void cpu_decode_exec( uint8_t opcode )
 {
@@ -203,11 +206,11 @@ void cpu_decode_exec( uint8_t opcode )
                  SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
 
         // ASL - Arithmetic Shift Left
-        INSTPAT( "ASL", 0x0A, ACCUMULATOR );
-        INSTPAT( "ASL", 0x06, ZEROPAGE );
-        INSTPAT( "ASL", 0x16, ZEROPAGE_X );
-        INSTPAT( "ASL", 0x0E, ABSOLUTE );
-        INSTPAT( "ASL", 0x1E, ABSOLUTE_X );
+        INSTPAT( "ASL", 0x0A, ACCUMULATOR, assert( 0 ) );
+        INSTPAT( "ASL", 0x06, ZEROPAGE, assert( 0 ) );
+        INSTPAT( "ASL", 0x16, ZEROPAGE_X, assert( 0 ) );
+        INSTPAT( "ASL", 0x0E, ABSOLUTE, assert( 0 ) );
+        INSTPAT( "ASL", 0x1E, ABSOLUTE_X, assert( 0 ) );
 
         // BIT - Bit Test
         INSTPAT( "BIT", 0x24, ZEROPAGE,
@@ -270,13 +273,13 @@ void cpu_decode_exec( uint8_t opcode )
                  CARRY_ = ( cpu.accumulator >= M ), SET_ZERO_( cpu.accumulator - M ), SET_NEGATIVE_( cpu.accumulator - M ) );
 
         // CPX - Compare X Register
-#define CPX_( M_ ) CARRY_ = ( cpu.x >= M_ ), SET_ZERO_( cpu.x - M_ ), SET_NEGATIVE_( cpu.x - M_ )
+#define CPX_( M_ ) CARRY_ = ( cpu.x >= M_ ), SET_ZERO_( cpu.x - M_ ), SET_NEGATIVE_( ( cpu.x - M_ ) )
         INSTPAT( "CPX", 0xE0, IMMEDIATE, CPX_( M ) );
         INSTPAT( "CPX", 0xE4, ZEROPAGE, CPX_( M ) );
         INSTPAT( "CPX", 0xEC, ABSOLUTE, CPX_( M ) );
 
 // CPY - Compare Y Register
-#define CPY_( M_ ) CARRY_ = ( cpu.y >= M_ ), SET_ZERO_( cpu.y - M_ ), SET_NEGATIVE_( cpu.y - M_ )
+#define CPY_( M_ ) CARRY_ = ( cpu.y >= M_ ), SET_ZERO_( cpu.y - M_ ), SET_NEGATIVE_( ( cpu.y - M_ ) )
         INSTPAT( "CPY", 0xC0, IMMEDIATE, CPY_( M ) );
         INSTPAT( "CPY", 0xC4, ZEROPAGE, CPY_( M ) );
         INSTPAT( "CPY", 0xCC, ABSOLUTE, CPY_( M ) );
@@ -296,19 +299,20 @@ void cpu_decode_exec( uint8_t opcode )
 // EOR - Exclusive OR
 #define EOR_( A_, M_ ) A_ ^= M_, SET_ZERO_( A_ ), SET_NEGATIVE_( A_ )
         INSTPAT( "EOR", 0x49, IMMEDIATE, EOR_( cpu.accumulator, imm ) );
-        INSTPAT( "EOR", 0x45, ZEROPAGE, EOR_( cpu.accumulator, imm ) );
-        INSTPAT( "EOR", 0x55, ZEROPAGE_X, EOR_( cpu.accumulator, imm ) );
-        INSTPAT( "EOR", 0x4D, ABSOLUTE, EOR_( cpu.accumulator, imm ) );
-        INSTPAT( "EOR", 0x5D, ABSOLUTE_X, EOR_( cpu.accumulator, imm ) );
-        INSTPAT( "EOR", 0x59, ABSOLUTE_Y, EOR_( cpu.accumulator, imm ) );
-        INSTPAT( "EOR", 0x41, INDEXED_INDIRECT, EOR_( cpu.accumulator, imm ) );
-        INSTPAT( "EOR", 0x51, INDIRECT_INDEXED, EOR_( cpu.accumulator, imm ) );
+        INSTPAT( "EOR", 0x45, ZEROPAGE, EOR_( cpu.accumulator, M ) );
+        INSTPAT( "EOR", 0x55, ZEROPAGE_X, EOR_( cpu.accumulator, M ) );
+        INSTPAT( "EOR", 0x4D, ABSOLUTE, EOR_( cpu.accumulator, M ) );
+        INSTPAT( "EOR", 0x5D, ABSOLUTE_X, EOR_( cpu.accumulator, M ) );
+        INSTPAT( "EOR", 0x59, ABSOLUTE_Y, EOR_( cpu.accumulator, M ) );
+        INSTPAT( "EOR", 0x41, INDEXED_INDIRECT, EOR_( cpu.accumulator, M ) );
+        INSTPAT( "EOR", 0x51, INDIRECT_INDEXED, EOR_( cpu.accumulator, M ) );
 
-        // INC - Increment Memory
-        INSTPAT( "INC", 0xE6, ZEROPAGE );
-        INSTPAT( "INC", 0xF6, ZEROPAGE_X );
-        INSTPAT( "INC", 0xEE, ABSOLUTE );
-        INSTPAT( "INC", 0xFE, ABSOLUTE_X );
+// INC - Increment Memory
+#define INC_( addr, M_ ) vaddr_write( addr, M_ + 1 ), SET_ZERO_( M_ + 1 ), SET_NEGATIVE_( ( M_ + 1 ) )
+        INSTPAT( "INC", 0xE6, ZEROPAGE, INC_( zeropage_addr, M ) );
+        INSTPAT( "INC", 0xF6, ZEROPAGE_X, INC_( zeropage_addr, M ) );
+        INSTPAT( "INC", 0xEE, ABSOLUTE, INC_( absolute_addr, M ) );
+        INSTPAT( "INC", 0xFE, ABSOLUTE_X, INC_( absolute_addr, M ) );
 
         // INX - Increment X Register
         INSTPAT( "INX", 0xE8, IMPLICIT, cpu.x++, SET_ZERO_( cpu.x ), SET_NEGATIVE_( cpu.x ) );
@@ -323,27 +327,26 @@ void cpu_decode_exec( uint8_t opcode )
 
         // JSR - Jump to Subroutine
         INSTPAT( "JSR", 0X20, ABSOLUTE,
-                 vaddr_write( --cpu.sp, cpu.pc >> 8 ), vaddr_write( --cpu.sp, cpu.pc ), cpu.pc = absolute_addr );
+                 vaddr_write( STACKADD( cpu.sp-- ), ( cpu.pc - 1 ) >> 8 ), vaddr_write( STACKADD( cpu.sp-- ), ( cpu.pc - 1 ) ), cpu.pc = absolute_addr );
 
         // LDA - Load Accumulator
-        INSTPAT( "LDA", 0xA9, IMMEDIATE,
-                 cpu.accumulator = imm, SET_ZERO_( imm ), SET_NEGATIVE_( imm ) );
-        INSTPAT( "LDA", 0xA5, ZEROPAGE );
-        INSTPAT( "LDA", 0xB5, ZEROPAGE_X );
-        INSTPAT( "LDA", 0xAD, ABSOLUTE );
-        INSTPAT( "LDA", 0xBD, ABSOLUTE_X );
-        INSTPAT( "LDA", 0xB9, ABSOLUTE_Y );
-        INSTPAT( "LDA", 0xA1, INDEXED_INDIRECT );
-        INSTPAT( "LDA", 0xB1, INDIRECT_INDEXED );
+#define LDA_( M_ ) cpu.accumulator = M_, SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator )
+        INSTPAT( "LDA", 0xA9, IMMEDIATE, LDA_( M ) );
+        INSTPAT( "LDA", 0xA5, ZEROPAGE, LDA_( M ) );
+        INSTPAT( "LDA", 0xB5, ZEROPAGE_X, LDA_( M ) );
+        INSTPAT( "LDA", 0xAD, ABSOLUTE, LDA_( M ) );
+        INSTPAT( "LDA", 0xBD, ABSOLUTE_X, LDA_( M ) );
+        INSTPAT( "LDA", 0xB9, ABSOLUTE_Y, LDA_( M ) );
+        INSTPAT( "LDA", 0xA1, INDEXED_INDIRECT, LDA_( M ) );
+        INSTPAT( "LDA", 0xB1, INDIRECT_INDEXED, LDA_( M ) );
 
-        // LDX - Load X Register
-        INSTPAT( "LDX", 0xA2, IMMEDIATE,
-                 cpu.x = imm,
-                 SET_ZERO_( cpu.x ), SET_NEGATIVE_( cpu.x ) );
-        INSTPAT( "LDX", 0xA6, ZEROPAGE );
-        INSTPAT( "LDX", 0xB6, ZEROPAGE_Y );
-        INSTPAT( "LDX", 0xAE, ABSOLUTE );
-        INSTPAT( "LDX", 0xBE, ABSOLUTE_Y );
+// LDX - Load X Register
+#define LDX_( M_ ) cpu.x = M_, SET_ZERO_( cpu.x ), SET_NEGATIVE_( cpu.x )
+        INSTPAT( "LDX", 0xA2, IMMEDIATE, LDX_( M ) );
+        INSTPAT( "LDX", 0xA6, ZEROPAGE, LDX_( M ) );
+        INSTPAT( "LDX", 0xB6, ZEROPAGE_Y, LDX_( M ) );
+        INSTPAT( "LDX", 0xAE, ABSOLUTE, LDX_( M ) );
+        INSTPAT( "LDX", 0xBE, ABSOLUTE_Y, LDX_( M ) );
 
 // LDY - Load Y Register
 #define LDY_( M_ ) cpu.y = M_, SET_ZERO_( M_ ), SET_NEGATIVE_( M_ )
@@ -354,11 +357,11 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "LDY", 0xBC, ABSOLUTE_X, LDY_( M ) );
 
         // LSR - Logical Shift Right
-        INSTPAT( "LSR", 0x4A, ACCUMULATOR );
-        INSTPAT( "LSR", 0x46, ZEROPAGE );
-        INSTPAT( "LSR", 0x56, ZEROPAGE_X );
-        INSTPAT( "LSR", 0x4E, ABSOLUTE );
-        INSTPAT( "LSR", 0x5E, ABSOLUTE_X );
+        INSTPAT( "LSR", 0x4A, ACCUMULATOR, assert( 0 ) );
+        INSTPAT( "LSR", 0x46, ZEROPAGE, assert( 0 ) );
+        INSTPAT( "LSR", 0x56, ZEROPAGE_X, assert( 0 ) );
+        INSTPAT( "LSR", 0x4E, ABSOLUTE, assert( 0 ) );
+        INSTPAT( "LSR", 0x5E, ABSOLUTE_X, assert( 0 ) );
 
         // NOP - No Operation
         INSTPAT( "NOP", 0xEA, IMPLICIT, CPU_NOP_ );
@@ -386,25 +389,25 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "PLP", 0x28, IMPLICIT, cpu.status.ps = STACK_POP_ & 0xEF | 0b100000 );
 
         // ROL - Rotate Left
-        INSTPAT( "ROL", 0x2A, ACCUMULATOR );
-        INSTPAT( "ROL", 0x26, ZEROPAGE );
-        INSTPAT( "ROL", 0x36, ZEROPAGE_X );
-        INSTPAT( "ROL", 0x2E, ABSOLUTE );
-        INSTPAT( "ROL", 0x3E, ABSOLUTE_X );
+        INSTPAT( "ROL", 0x2A, ACCUMULATOR, assert( 0 ) );
+        INSTPAT( "ROL", 0x26, ZEROPAGE, assert( 0 ) );
+        INSTPAT( "ROL", 0x36, ZEROPAGE_X, assert( 0 ) );
+        INSTPAT( "ROL", 0x2E, ABSOLUTE, assert( 0 ) );
+        INSTPAT( "ROL", 0x3E, ABSOLUTE_X, assert( 0 ) );
 
         // ROR - Rotate Right
-        INSTPAT( "ROR", 0x6A, ACCUMULATOR );
-        INSTPAT( "ROR", 0x66, ZEROPAGE );
-        INSTPAT( "ROR", 0x76, ZEROPAGE_X );
-        INSTPAT( "ROR", 0x6E, ABSOLUTE );
-        INSTPAT( "ROR", 0x7E, ABSOLUTE_X );
+        INSTPAT( "ROR", 0x6A, ACCUMULATOR, assert( 0 ) );
+        INSTPAT( "ROR", 0x66, ZEROPAGE, assert( 0 ) );
+        INSTPAT( "ROR", 0x76, ZEROPAGE_X, assert( 0 ) );
+        INSTPAT( "ROR", 0x6E, ABSOLUTE, assert( 0 ) );
+        INSTPAT( "ROR", 0x7E, ABSOLUTE_X, assert( 0 ) );
 
         // RTI - Return from Interrupt
-        INSTPAT( "RTI", 0x40, IMPLICIT );
+        INSTPAT( "RTI", 0x40, IMPLICIT, assert( 0 ) );
 
         // RTS - Return from Subroutine
         INSTPAT( "RTS", 0x60, IMPLICIT,
-                 cpu.pc = vaddr_read( cpu.sp ) + ( (addr_t) vaddr_read( cpu.sp + 1 ) << 8 ),
+                 cpu.pc = 1 + vaddr_read( STACKADD( cpu.sp + 1 ) ) + ( (addr_t) vaddr_read( STACKADD( cpu.sp + 2 ) ) << 8 ),
                  cpu.sp += 2 );
 
 // SBC - Subtract with Carry
@@ -432,12 +435,18 @@ void cpu_decode_exec( uint8_t opcode )
         // STA - Store Accumulator
         INSTPAT( "STA", 0x85, ZEROPAGE,
                  vaddr_write( zeropage_addr, cpu.accumulator ) );
-        INSTPAT( "STA", 0x95, ZEROPAGE_Y );
-        INSTPAT( "STA", 0x8D, ABSOLUTE );
-        INSTPAT( "STA", 0x9D, ABSOLUTE_X );
-        INSTPAT( "STA", 0x99, ABSOLUTE_Y );
-        INSTPAT( "STA", 0x81, INDEXED_INDIRECT );
-        INSTPAT( "STA", 0x91, INDIRECT_INDEXED );
+        INSTPAT( "STA", 0x95, ZEROPAGE_Y,
+                 vaddr_write( zeropage_addr, cpu.accumulator ) );
+        INSTPAT( "STA", 0x8D, ABSOLUTE,
+                 vaddr_write( absolute_addr, cpu.accumulator ) );
+        INSTPAT( "STA", 0x9D, ABSOLUTE_X,
+                 vaddr_write( absolute_addr, cpu.accumulator ) );
+        INSTPAT( "STA", 0x99, ABSOLUTE_Y,
+                 vaddr_write( absolute_addr, cpu.accumulator ) );
+        INSTPAT( "STA", 0x81, INDEXED_INDIRECT,
+                 vaddr_write( indirect_addr, cpu.accumulator ) );
+        INSTPAT( "STA", 0x91, INDIRECT_INDEXED,
+                 vaddr_write( indirect_addr, cpu.accumulator ) );
 
         // STX - Store X Register
         INSTPAT( "STX", 0x86, ZEROPAGE,
@@ -464,7 +473,7 @@ void cpu_decode_exec( uint8_t opcode )
         // TXA - Transfer X to Accumulator
         INSTPAT( "TXA", 0x8A, IMPLICIT, TRANS_( cpu.x, cpu.accumulator ) );
         // TXS - Transfer X to Stack Pointer
-        INSTPAT( "TXS", 0x9A, IMPLICIT, TRANS_( cpu.x, cpu.sp ) );
+        INSTPAT( "TXS", 0x9A, IMPLICIT, cpu.sp = cpu.x );
         // TYA - Transfer Y to Accumulator
         INSTPAT( "TYA", 0x98, IMPLICIT, TRANS_( cpu.y, cpu.accumulator ) );
 

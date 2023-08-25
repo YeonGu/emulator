@@ -8,6 +8,8 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "memory.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 addr_t RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 
@@ -40,6 +42,12 @@ void vaddr_write( addr_t addr, uint8_t data )
     struct mem_map_t *map;
     assert( map = find_map( addr ) );
     addr_t offset = addr - map->nes_begin;
+
+    if ( addr >= 0x0100 )
+    {
+        printf( "MEMORY TRACE: WRITE %02x at %04x\n", data, addr );
+        //        system( "pause" );
+    }
 
     map->map_begin[ offset ] = data;
 }

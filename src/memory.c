@@ -66,6 +66,7 @@ struct mem_map_t *find_map( addr_t addr )
         }
         return &mapper[ i ];
     }
+    printf( "memory mapping %04x out of bound/not implemented.\n", addr );
     return NULL;
 }
 

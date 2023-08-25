@@ -149,6 +149,8 @@ void cpu_exec_once( FILE *file )
 #define STACK_POP_ vaddr_read( STACKADD( ++cpu.sp ) )
 #define STACK_PUSH_( data ) vaddr_write( STACKADD( cpu.sp-- ), data )
 
+#define SET_ZERONEG_( a ) SET_ZERO_( a ), SET_NEGATIVE_( a )
+
 void cpu_decode_exec( uint8_t opcode )
 {
     addr_t indirect_tmp;
@@ -156,10 +158,12 @@ void cpu_decode_exec( uint8_t opcode )
     uint8_t imm;
     int8_t  imm_signed;
     uint8_t M;
-    addr_t  zeropage_addr;
-    addr_t  relative_addr;
-    addr_t  absolute_addr;
-    addr_t  indirect_addr;
+    uint8_t tmp;
+
+    addr_t zeropage_addr;
+    addr_t relative_addr;
+    addr_t absolute_addr;
+    addr_t indirect_addr;
 
     uint8_t ans;
 
@@ -205,12 +209,14 @@ void cpu_decode_exec( uint8_t opcode )
                  cpu.accumulator &= vaddr_read( indirect_addr ),
                  SET_ZERO_( cpu.accumulator ), SET_NEGATIVE_( cpu.accumulator ) );
 
-        // ASL - Arithmetic Shift Left
-        INSTPAT( "ASL", 0x0A, ACCUMULATOR, assert( 0 ) );
-        INSTPAT( "ASL", 0x06, ZEROPAGE, assert( 0 ) );
-        INSTPAT( "ASL", 0x16, ZEROPAGE_X, assert( 0 ) );
-        INSTPAT( "ASL", 0x0E, ABSOLUTE, assert( 0 ) );
-        INSTPAT( "ASL", 0x1E, ABSOLUTE_X, assert( 0 ) );
+// ASL - Arithmetic Shift Left
+#define ASL_M_( addr, M_ ) CARRY_ = M_ >> 7, M_ <<= 1, SET_ZERONEG_( M_ ), vaddr_write( addr, M_ )
+        INSTPAT( "ASL", 0x0A, ACCUMULATOR,
+                 CARRY_ = cpu.accumulator >> 7, cpu.accumulator <<= 1, SET_ZERONEG_( cpu.accumulator ) );
+        INSTPAT( "ASL", 0x06, ZEROPAGE, ASL_M_( zeropage_addr, M ) );
+        INSTPAT( "ASL", 0x16, ZEROPAGE_X, ASL_M_( zeropage_addr, M ) );
+        INSTPAT( "ASL", 0x0E, ABSOLUTE, ASL_M_( absolute_addr, M ) );
+        INSTPAT( "ASL", 0x1E, ABSOLUTE_X, ASL_M_( absolute_addr, M ) );
 
         // BIT - Bit Test
         INSTPAT( "BIT", 0x24, ZEROPAGE,
@@ -356,12 +362,14 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "LDY", 0xAC, ABSOLUTE, LDY_( M ) );
         INSTPAT( "LDY", 0xBC, ABSOLUTE_X, LDY_( M ) );
 
-        // LSR - Logical Shift Right
-        INSTPAT( "LSR", 0x4A, ACCUMULATOR, assert( 0 ) );
-        INSTPAT( "LSR", 0x46, ZEROPAGE, assert( 0 ) );
-        INSTPAT( "LSR", 0x56, ZEROPAGE_X, assert( 0 ) );
-        INSTPAT( "LSR", 0x4E, ABSOLUTE, assert( 0 ) );
-        INSTPAT( "LSR", 0x5E, ABSOLUTE_X, assert( 0 ) );
+// LSR - Logical Shift Right
+#define LSR_M_( addr, M_ ) CARRY_ = M_ & 0x01, vaddr_write( addr, M_ >>= 1 ), SET_ZERO_( M_ ), NEGATIVE_ = 0
+        INSTPAT( "LSR", 0x4A, ACCUMULATOR,
+                 CARRY_ = cpu.accumulator & 0x01, cpu.accumulator >>= 1, SET_ZERO_( cpu.accumulator ), NEGATIVE_ = 0 );
+        INSTPAT( "LSR", 0x46, ZEROPAGE, LSR_M_( zeropage_addr, M ) );
+        INSTPAT( "LSR", 0x56, ZEROPAGE_X, LSR_M_( zeropage_addr, M ) );
+        INSTPAT( "LSR", 0x4E, ABSOLUTE, LSR_M_( absolute_addr, M ) );
+        INSTPAT( "LSR", 0x5E, ABSOLUTE_X, LSR_M_( absolute_addr, M ) );
 
         // NOP - No Operation
         INSTPAT( "NOP", 0xEA, IMPLICIT, CPU_NOP_ );
@@ -388,22 +396,26 @@ void cpu_decode_exec( uint8_t opcode )
         // PLP - Pull Processor Status
         INSTPAT( "PLP", 0x28, IMPLICIT, cpu.status.ps = STACK_POP_ & 0xEF | 0b100000 );
 
-        // ROL - Rotate Left
-        INSTPAT( "ROL", 0x2A, ACCUMULATOR, assert( 0 ) );
-        INSTPAT( "ROL", 0x26, ZEROPAGE, assert( 0 ) );
-        INSTPAT( "ROL", 0x36, ZEROPAGE_X, assert( 0 ) );
-        INSTPAT( "ROL", 0x2E, ABSOLUTE, assert( 0 ) );
-        INSTPAT( "ROL", 0x3E, ABSOLUTE_X, assert( 0 ) );
+// ROL - Rotate Left
+#define ROL_( M_ ) tmp = M_ >> 7, M_ <<= 1, M_ |= CARRY_, CARRY_ = tmp, SET_ZERONEG_( M_ )
+        INSTPAT( "ROL", 0x2A, ACCUMULATOR, ROL_( cpu.accumulator ) );
+        INSTPAT( "ROL", 0x26, ZEROPAGE, ROL_( M ), vaddr_write( zeropage_addr, M ) );
+        INSTPAT( "ROL", 0x36, ZEROPAGE_X, ROL_( M ), vaddr_write( zeropage_addr, M ) );
+        INSTPAT( "ROL", 0x2E, ABSOLUTE, ROL_( M ), vaddr_write( absolute_addr, M ) );
+        INSTPAT( "ROL", 0x3E, ABSOLUTE_X, ROL_( M ), vaddr_write( absolute_addr, M ) );
 
         // ROR - Rotate Right
-        INSTPAT( "ROR", 0x6A, ACCUMULATOR, assert( 0 ) );
-        INSTPAT( "ROR", 0x66, ZEROPAGE, assert( 0 ) );
-        INSTPAT( "ROR", 0x76, ZEROPAGE_X, assert( 0 ) );
-        INSTPAT( "ROR", 0x6E, ABSOLUTE, assert( 0 ) );
-        INSTPAT( "ROR", 0x7E, ABSOLUTE_X, assert( 0 ) );
+#define ROR_( M_ ) tmp = M_ & 0x01, M_ >>= 1, M_ |= ( CARRY_ << 7 ), CARRY_ = tmp, SET_ZERONEG_( M_ )
+        INSTPAT( "ROR", 0x6A, ACCUMULATOR, ROR_( cpu.accumulator ) );
+        INSTPAT( "ROR", 0x66, ZEROPAGE, ROR_( M ), vaddr_write( zeropage_addr, M ) );
+        INSTPAT( "ROR", 0x76, ZEROPAGE_X, ROR_( M ), vaddr_write( zeropage_addr, M ) );
+        INSTPAT( "ROR", 0x6E, ABSOLUTE, ROR_( M ), vaddr_write( absolute_addr, M ) );
+        INSTPAT( "ROR", 0x7E, ABSOLUTE_X, ROR_( M ), vaddr_write( absolute_addr, M ) );
 
         // RTI - Return from Interrupt
-        INSTPAT( "RTI", 0x40, IMPLICIT, assert( 0 ) );
+        INSTPAT( "RTI", 0x40, IMPLICIT, cpu.status.ps = STACK_POP_,
+                 cpu.pc = STACK_POP_, cpu.pc |= ( STACK_POP_ << 8 ),
+                 cpu.status.ps &= 0xEF, cpu.status.ps |= 0x20 ); // Set flagb to 2'b01
 
         // RTS - Return from Subroutine
         INSTPAT( "RTS", 0x60, IMPLICIT,

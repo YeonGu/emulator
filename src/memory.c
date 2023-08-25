@@ -35,10 +35,10 @@ uint8_t vaddr_read( addr_t addr )
     assert( map );
     addr_t offset = addr - map->nes_begin;
 
-    if ( addr < 0x6000 )
-    {
-        printf( "\tMTRACE: READ %02x at %04x\n", map->map_begin[ offset ], addr );
-    }
+    //    if ( addr < 0x6000 )
+    //    {
+    printf( "\tMTRACE: READ %02x at %04x\n", map->map_begin[ offset ], addr );
+    //    }
 
     return map->map_begin[ offset ];
 }

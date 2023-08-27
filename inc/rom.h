@@ -37,7 +37,7 @@ struct nes_rom_info_t
     int      mapper;
 };
 
-int  read_nes_rom( int argc, char **argv );
+int  read_rom_mapper( int argc, char **argv );
 void print_rom_info();
 
 #endif // EMULATOR_ROM_H

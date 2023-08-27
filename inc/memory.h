@@ -21,9 +21,12 @@ struct mem_map_t
     uint8_t *map_begin;
     addr_t   nes_begin;
     uint16_t map_size;
+
+    void ( *mem_prev_handler )( addr_t addr );
+    void ( *mem_after_handler )( addr_t addr );
 };
 
-void init_rom( FILE *file, struct nes_rom_info_t *info );
+void fetch_rom( FILE *file, struct nes_rom_info_t *info );
 void init_mapper( struct nes_rom_info_t *info );
 
 uint8_t vaddr_read( addr_t addr );

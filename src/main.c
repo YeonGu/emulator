@@ -9,16 +9,16 @@
 #include <cpu.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 int main( int argc, char *argv[] )
 {
-    read_nes_rom( argc, argv ); // Load ROM and INTERRUPT VECTORS ( nes_rom.c -> memory.c ); Init mapper
-    init_cpu();                 // Init CPU (RESET vector)
+    read_rom_mapper( argc, argv ); // Load ROM and INTERRUPT VECTORS ( nes_rom.c -> memory.c ); Init CPU mapper
 
-    int test_insts = 8991;
-    cpu_exec( test_insts );
+    init_cpu(); // Init CPU (RESET vector)
 
-    printf( "TiNES execution stopped. CPU Tested %d test insts.\n", test_insts );
+    int nr_test_insts = 8991;
+    cpu_exec( nr_test_insts );
+
+    printf( "TiNES execution stopped. CPU Tested %d test insts.\n", nr_test_insts );
     system( "pause" );
     return 0;
 }

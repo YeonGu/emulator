@@ -15,4 +15,6 @@ add_executable(emulator
         inc/cpu.h
         src/cpu_exec.c
         inc/configs.h
-        inc/cpu_datas.h)
+        inc/cpu_datas.h
+        src/mapper.c
+        inc/ppu-reg.h)

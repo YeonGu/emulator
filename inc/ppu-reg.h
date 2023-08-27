@@ -5,6 +5,7 @@
 #ifndef EMULATOR_PPU_REG_H
 #define EMULATOR_PPU_REG_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define FLAG( name_, size_ ) uint8_t name_ : size_
@@ -34,5 +35,7 @@ struct ppu_reg_t
         ppudata,
         oamdma;
 } ppu_reg; // Mapped to ppu_reg in cpu_mapper
+
+bool is_ppu_nmi_set() { return ppu_reg.ppuctrl.flag.V; };
 
 #endif // EMULATOR_PPU_REG_H

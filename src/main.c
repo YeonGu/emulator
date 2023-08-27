@@ -12,8 +12,7 @@
 int main( int argc, char *argv[] )
 {
     read_rom_mapper( argc, argv ); // Load ROM and INTERRUPT VECTORS ( nes_rom.c -> memory.c ); Init CPU mapper
-
-    init_cpu(); // Init CPU (RESET vector)
+    init_cpu();                    // Init CPU (RESET vector)
 
     int nr_test_insts = 8991;
     cpu_exec( nr_test_insts );

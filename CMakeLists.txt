@@ -17,4 +17,7 @@ add_executable(emulator
         inc/configs.h
         inc/cpu_datas.h
         src/mapper.c
-        inc/ppu-reg.h)
+        inc/ppu-reg.h
+        src/nes.c
+        src/nes.c
+        inc/nes.h)

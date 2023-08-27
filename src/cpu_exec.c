@@ -8,22 +8,16 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "configs.h"
+#include "ppu-reg.h"
 #include <cpu.h>
 #include <cpu_datas.h>
+// #include <ppu-reg.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
 struct cpu_6502_t cpu = {};
-#define CARRY_ cpu.status.flag.carry
-#define ZERO_ cpu.status.flag.zero
-#define INTR_DIS_ cpu.status.flag.intr_disable
-#define DEC_ cpu.status.flag.decimal
-#define FLAG_B_ cpu.status.flag.flag_b
-#define OVERFLOW_ cpu.status.flag.overflow
-#define NEGATIVE_ cpu.status.flag.negative
 
-void cpu_exec_once();
+void cpu_exec_once( FILE *file );
 
 //////////////////////////////////////////////////////////////////////
 
@@ -32,14 +26,16 @@ static struct cpu_6502_inst_t inst[ 256 ] = {};
     case a:            \
         __VA_ARGS__;   \
         break;
+extern addr_t RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 
 //////////////////////////////////////////////////////////////////////
 static uint32_t nr_insts_exec;
-static uint32_t nr_cycles = 7;
+long long       nr_cycles = 7;
 
 void cpu_decode_exec( uint8_t opcode );
 void cpu_exec_once( FILE *file )
 {
+
     nr_insts_exec++;
     addr_t  pc     = cpu.pc;
     uint8_t opcode = vaddr_read( cpu.pc );
@@ -62,7 +58,44 @@ void cpu_exec_once( FILE *file )
     cpu_decode_exec( opcode );
 }
 
+#define STACKADD( s_ ) s_ + 0x100
+#define STACK_POP_ vaddr_read( STACKADD( ++cpu.sp ) )
+#define STACK_PUSH_( data ) vaddr_write( STACKADD( cpu.sp-- ), data )
+void cpu_call_interrupt()
+{
+    if ( !is_ppu_nmi_set() )
+        return;
+
+    //      #  address R/W description
+    // --- ------- --- -----------------------------------------------
+    //  1    PC     R  fetch opcode (and discard it - $00 (BRK) is forced into the opcode register instead)
+    //  2    PC     R  read next instruction byte (actually the same as above, since PC increment is suppressed. Also discarded.)
+    //  3  $0100,S  W  push PCH on stack, decrement S
+    //  4  $0100,S  W  push PCL on stack, decrement S
+    // *** At this point, the signal status determines which interrupt vector is used ***
+    //  5  $0100,S  W  push P on stack (with B flag *clear*), decrement S
+    //  6   A       R  fetch PCL (A = FFFE for IRQ, A = FFFA for NMI), set I flag
+    //  7   A       R  fetch PCH (A = FFFF for IRQ, A = FFFB for NMI)
+    STACK_PUSH_( cpu.pc >> 8 );
+    STACK_PUSH_( cpu.pc );
+    nr_cycles += 4;
+    STACK_PUSH_( cpu.status.ps & 0b11001111 );
+    cpu.pc = NMI_VECTOR;
+}
+
 //////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//  Instrucion Execution.
+//
+//////////////////////////////////////////////////////////////////////
+#define CARRY_ cpu.status.flag.carry
+#define ZERO_ cpu.status.flag.zero
+#define INTR_DIS_ cpu.status.flag.intr_disable
+#define DEC_ cpu.status.flag.decimal
+#define FLAG_B_ cpu.status.flag.flag_b
+#define OVERFLOW_ cpu.status.flag.overflow
+#define NEGATIVE_ cpu.status.flag.negative
+
 #define INSTPAT( inst_name, code, ADDR_MODE, ... )                                                                   \
     case code:                                                                                                       \
         switch ( ADDRMODE( ADDR_MODE ) )                                                                             \
@@ -155,10 +188,6 @@ void cpu_exec_once( FILE *file )
 #define DISABLE_DEC_ DEC_ = 0
 #define SET_OVERFLOW_( a, b ) OVERFLOW_ = OVERFLOW_2_8_( a + b, a, b )
 #define SET_NEGATIVE_( a ) NEGATIVE_ = ( a >> 7 )
-
-#define STACKADD( s_ ) s_ + 0x100
-#define STACK_POP_ vaddr_read( STACKADD( ++cpu.sp ) )
-#define STACK_PUSH_( data ) vaddr_write( STACKADD( cpu.sp-- ), data )
 
 #define SET_ZERONEG_( a ) SET_ZERO_( a ), SET_NEGATIVE_( a )
 
@@ -516,7 +545,7 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "LAX", 0xB3, INDIRECT_INDEXED, LAX_( M ), CYC( cross_page ) );
 
         // SAX - Store Accumulator & x
-#define SAX_( addr ) vaddr_write( addr, cpu.accumulator & cpu.x )
+#define SAX_( addr ) vaddr_write( addr, cpu.accumulator &cpu.x )
         INSTPAT( "SAX", 0x87, ZEROPAGE, SAX_( zeropage_addr ) );
         INSTPAT( "SAX", 0x97, ZEROPAGE_Y, SAX_( zeropage_addr ) );
         INSTPAT( "SAX", 0x8F, ABSOLUTE, SAX_( absolute_addr ) );

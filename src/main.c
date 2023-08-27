@@ -6,18 +6,21 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "../inc/rom.h"
+#include "nes.h"
 #include <cpu.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+void init_ppu();
+
 int main( int argc, char *argv[] )
 {
     read_rom_mapper( argc, argv ); // Load ROM and INTERRUPT VECTORS ( nes_rom.c -> memory.c ); Init CPU mapper
     init_cpu();                    // Init CPU (RESET vector)
+    init_ppu();                    // Init PPU
 
-    int nr_test_insts = 8991;
-    cpu_exec( nr_test_insts );
+    nes_mainloop();
 
-    printf( "TiNES execution stopped. CPU Tested %d test insts.\n", nr_test_insts );
     system( "pause" );
     return 0;
 }

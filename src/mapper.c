@@ -15,9 +15,10 @@ int              nr_mapper;
 addr_t           RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 
 static uint8_t ram[ 0x0800 ];
-// static uint8_t ppu_reg[ 0x0008 ];
 static uint8_t apu_io_reg[ 0x0018 ];
 static uint8_t sram[ 0x2000 ];
+
+extern struct ppu_reg_t ppu_reg;
 
 uint8_t *get_prg_rom( int idx );
 uint8_t *get_chr_rom( int idx );

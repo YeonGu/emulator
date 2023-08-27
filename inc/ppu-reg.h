@@ -34,8 +34,8 @@ struct ppu_reg_t
         ppuaddr,
         ppudata,
         oamdma;
-} ppu_reg; // Mapped to ppu_reg in cpu_mapper
+}; // Mapped to ppu_reg in cpu_mapper
 
-bool is_ppu_nmi_set() { return ppu_reg.ppuctrl.flag.V; };
+bool is_ppu_nmi_set();
 
 #endif // EMULATOR_PPU_REG_H

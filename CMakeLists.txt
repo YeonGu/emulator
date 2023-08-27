@@ -20,4 +20,5 @@ add_executable(emulator
         inc/ppu-reg.h
         src/nes.c
         src/nes.c
-        inc/nes.h)
+        inc/nes.h
+        src/ppu.c)

@@ -80,7 +80,7 @@ void fetch_rom( FILE *file, struct nes_rom_info_t *info )
 {
     if ( info->mapper != 0 )
     {
-        printf( "ERROR: mapper = %d, NOT IMPLEMENTED.", info->mapper );
+        printf( "ERROR: cpu_memory_mapper = %d, NOT IMPLEMENTED.", info->mapper );
         assert( 0 );
     }
     assert( ( info->prg_size == 1 ) || ( info->prg_size == 2 ) );

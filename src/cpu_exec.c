@@ -11,26 +11,20 @@
 #include "ppu-reg.h"
 #include <cpu.h>
 #include <cpu_datas.h>
-// #include <ppu-reg.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
 struct cpu_6502_t cpu = {};
-
-void cpu_exec_once( FILE *file );
+void              cpu_exec_once( FILE *file );
+static uint32_t   nr_insts_exec;
+long long         nr_cycles = 7;
 
 //////////////////////////////////////////////////////////////////////
+// static struct cpu_6502_inst_t inst[ 256 ] = {};
 
-static struct cpu_6502_inst_t inst[ 256 ] = {};
-#define CASE( a, ... ) \
-    case a:            \
-        __VA_ARGS__;   \
-        break;
 extern addr_t RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
-
 //////////////////////////////////////////////////////////////////////
-static uint32_t nr_insts_exec;
-long long       nr_cycles = 7;
 
 void cpu_decode_exec( uint8_t opcode );
 void cpu_exec_once( FILE *file )
@@ -58,7 +52,7 @@ void cpu_exec_once( FILE *file )
     cpu_decode_exec( opcode );
 }
 
-#define STACKADD( s_ ) s_ + 0x100
+#define STACKADD( s_ ) ( s_ + 0x100 )
 #define STACK_POP_ vaddr_read( STACKADD( ++cpu.sp ) )
 #define STACK_PUSH_( data ) vaddr_write( STACKADD( cpu.sp-- ), data )
 void cpu_call_interrupt()
@@ -81,13 +75,16 @@ void cpu_call_interrupt()
     nr_cycles += 4;
     STACK_PUSH_( cpu.status.ps & 0b11001111 );
     cpu.pc = NMI_VECTOR;
+    nr_cycles += 3;
 }
 
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
-//  Instrucion Execution.
+//  Instruction Execution.
 //
 //////////////////////////////////////////////////////////////////////
+
+// Flags in PS
 #define CARRY_ cpu.status.flag.carry
 #define ZERO_ cpu.status.flag.zero
 #define INTR_DIS_ cpu.status.flag.intr_disable
@@ -198,15 +195,15 @@ void cpu_decode_exec( uint8_t opcode )
 
     uint8_t imm;
     int8_t  imm_signed;
-    uint8_t M;
     uint8_t tmp;
 
     uint8_t cross_page;
 
-    addr_t zeropage_addr;
-    int8_t relative_addr;
-    addr_t absolute_addr;
-    addr_t indirect_addr;
+    addr_t  zeropage_addr;
+    int8_t  relative_addr;
+    addr_t  absolute_addr;
+    addr_t  indirect_addr;
+    uint8_t M;
 
     uint8_t ans;
 
@@ -545,7 +542,7 @@ void cpu_decode_exec( uint8_t opcode )
         INSTPAT( "LAX", 0xB3, INDIRECT_INDEXED, LAX_( M ), CYC( cross_page ) );
 
         // SAX - Store Accumulator & x
-#define SAX_( addr ) vaddr_write( addr, cpu.accumulator &cpu.x )
+#define SAX_( addr ) vaddr_write( addr, cpu.accumulator & cpu.x )
         INSTPAT( "SAX", 0x87, ZEROPAGE, SAX_( zeropage_addr ) );
         INSTPAT( "SAX", 0x97, ZEROPAGE_Y, SAX_( zeropage_addr ) );
         INSTPAT( "SAX", 0x8F, ABSOLUTE, SAX_( absolute_addr ) );

@@ -8,6 +8,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define CONFIG_PPU_REG_BASE 0x2000 // https://www.nesdev.org/wiki/CPU_memory_map
+#define CONFIG_OAM_DMA_BASE 0x4014
+
 #define FLAG( name_, size_ ) uint8_t name_ : size_
 struct ppu_reg_t
 {
@@ -34,8 +37,9 @@ struct ppu_reg_t
         ppuaddr,
         ppudata,
         oamdma;
-}; // Mapped to ppu_reg in cpu_mapper
+}; // Mapped to ppu_reg in cpu_memory_mapper
 
 bool is_ppu_nmi_set();
+void set_ppu_nmi( bool v );
 
 #endif // EMULATOR_PPU_REG_H

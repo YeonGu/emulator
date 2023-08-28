@@ -15,15 +15,14 @@
 
 #define addr_t uint16_t
 
-struct mem_map_t
+struct cpu_mem_map_t
 {
     char    *map_name;
     uint8_t *map_begin;
     addr_t   nes_begin;
     uint16_t map_size;
 
-    void ( *mem_prev_handler )( addr_t addr );
-    void ( *mem_after_handler )( addr_t addr );
+    void ( *mem_write_handler )( addr_t offset, uint8_t data );
 };
 
 void fetch_rom( FILE *file, struct nes_rom_info_t *info );

@@ -21,4 +21,7 @@ add_executable(emulator
         src/nes.c
         src/nes.c
         inc/nes.h
-        src/ppu.c)
+        src/ppu.c
+        inc/ppu.h
+        src/ppu-reg-interface.c
+        inc/ppu-memory.h)

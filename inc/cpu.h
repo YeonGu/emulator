@@ -16,6 +16,10 @@ void init_cpu();
 void cpu_exec( int n );
 
 // https://www.nesdev.org/obelisk-6502-guide/registers.html#N
+/**
+ * @brief CPU Register Struct
+ *
+ */
 struct cpu_6502_t
 {
     addr_t pc;
@@ -24,8 +28,6 @@ struct cpu_6502_t
         accumulator,
         x,
         y;
-    //        ps; // TODO: STATUS struct
-    
     union {
         uint8_t ps;
         struct
@@ -60,12 +62,16 @@ enum
     ADDR_MODE_INDIRECT_INDEXED,
 };
 
-struct cpu_6502_inst_t
-{
-    char *name;
-    int   addr_mode;
-    void ( *inst_handler )( uint8_t opcode );
-    uint8_t opcode;
-};
+#define CASE( a, ... ) \
+    case a:            \
+        __VA_ARGS__;   \
+        break;
+// struct cpu_6502_inst_t
+// {
+//     char *name;
+//     int   addr_mode;
+//     void ( *inst_handler )( uint8_t opcode );
+//     uint8_t opcode;
+// };
 
 #endif // EMULATOR_CPU_H

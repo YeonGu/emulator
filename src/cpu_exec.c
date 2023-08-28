@@ -38,6 +38,9 @@ void cpu_exec_once( FILE *file )
     char itrace_log[ 64 ];
     sprintf( itrace_log, "%04X  %02X    A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
     printf( "%d| cycles:%d  %s", nr_insts_exec, nr_cycles, itrace_log );
+    char itrace_log[ 64 ];
+    sprintf( itrace_log, "%04X  %02X    A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
+    printf( "%d| cycles:%d  %s", nr_insts_exec, nr_cycles, itrace_log );
     char buf[ 64 ];
 
     // 读取文本，直到碰到新的一行开始
@@ -57,6 +60,7 @@ void cpu_exec_once( FILE *file )
 #define STACK_PUSH_( data ) vaddr_write( STACKADD( cpu.sp-- ), data )
 void cpu_call_interrupt()
 {
+    printf( " CPU entered NMI. CYC=%lld\n", nr_cycles );
     if ( !is_ppu_nmi_set() )
         return;
 

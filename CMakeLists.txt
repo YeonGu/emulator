@@ -24,4 +24,5 @@ add_executable(emulator
         src/ppu.c
         inc/ppu.h
         src/ppu-reg-interface.c
-        inc/ppu-memory.h)
+        inc/ppu-memory.h
+        src/ppu-memory.c)

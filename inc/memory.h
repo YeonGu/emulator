@@ -23,6 +23,7 @@ struct cpu_mem_map_t
     uint16_t map_size;
 
     void ( *mem_write_handler )( addr_t offset, uint8_t data );
+    void ( *mem_read_handler )( addr_t offset );
 };
 
 void fetch_rom( FILE *file, struct nes_rom_info_t *info );

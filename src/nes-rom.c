@@ -136,7 +136,8 @@ void read_rom_info()
         rom_info.chr_size *= ( m * 2 + 1 );
     }
 
-    rom_info.mapper = rom_hdr.flag6 >> 4;
+    rom_info.mapper                = rom_hdr.flag6 >> 4;
+    rom_info.nametable_mirror_type = rom_hdr.flag6 & 1;
 }
 
 void print_rom_info()

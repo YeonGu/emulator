@@ -16,16 +16,16 @@ extern long long         nr_cycles;
 void cpu_exec_once( FILE *file );
 
 /**
- * CPU Power on
+ * CPU Power on https://www.nesdev.org/wiki/CPU_power_up_state
  * */
 void init_cpu()
 {
     printf( "CPU init...\n" );
 
     // FIXME: only for TEST!
-    cpu.pc        = 0xC000;
     cpu.status.ps = 0x24;
     cpu.sp        = 0xFD;
+    cpu.pc        = RESET_VECTOR;
 }
 
 void cpu_exec( int cycles )

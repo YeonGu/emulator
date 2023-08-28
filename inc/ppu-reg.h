@@ -29,9 +29,18 @@ struct ppu_reg_t
         } flag;
     } ppuctrl; // $2000
 
-    uint8_t ppumask,
-        ppustatus,
-        oamaddr,
+    uint8_t ppumask;
+    union {
+        uint8_t ppustatus;
+        struct flags_t
+        {
+            FLAG( status, 5 );
+            FLAG( sprite_overflow, 1 );
+            FLAG( sprite0_hit, 1 );
+            FLAG( nmi_set, 1 );
+        } flag;
+    } ppustatus;
+    uint8_t oamaddr,
         oamdata,
         ppuscroll,
         ppuaddr,

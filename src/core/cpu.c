@@ -7,11 +7,11 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-#include <configs.h>
-#include <cpu.h>
+#include "cpu.h"
+#include "configs.h"
 extern struct cpu_6502_t cpu;
 extern addr_t            RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
-extern long long         nr_cycles;
+extern int64_t           nr_cycles;
 
 void cpu_exec_once( FILE *file );
 
@@ -30,8 +30,8 @@ void init_cpu()
 
 void cpu_exec( int cycles )
 {
-    FILE     *difftest_file = NULL;
-    long long gtime         = nr_cycles;
+    FILE    *difftest_file = NULL;
+    uint64_t gtime         = nr_cycles;
 #ifdef CONFIG_DIFFTEST
     difftest_file = fopen( "E:\\0 SEU\\2023\\TiNES\\emulator\\difftest\\cputestlog.txt", "r" );
     assert( difftest_file );

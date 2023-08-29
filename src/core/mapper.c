@@ -7,8 +7,8 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
+#include "memory.h"
 #include "ppu-reg.h"
-#include <memory.h>
 
 struct cpu_mem_map_t cpu_memory_mapper[ 16 ];
 int                  nr_cpu_mapper;

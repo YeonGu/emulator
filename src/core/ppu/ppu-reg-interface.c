@@ -7,8 +7,8 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-#include <ppu-reg.h>
-#include <ppu.h>
+#include "ppu-reg.h"
+#include "ppu.h"
 #include <stdbool.h>
 extern struct ppu_reg_t ppu_reg;
 uint8_t                 oamdma;

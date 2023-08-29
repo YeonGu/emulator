@@ -7,10 +7,10 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
+#include "ppu.h"
+#include "memory.h"
 #include "ppu-memory.h"
-#include <memory.h>
-#include <ppu-reg.h>
-#include <ppu.h>
+#include "ppu-reg.h"
 
 struct ppu_reg_t      ppu_reg;
 struct cpu_mem_map_t *find_cpu_map( addr_t addr );

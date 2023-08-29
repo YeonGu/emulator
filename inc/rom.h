@@ -8,10 +8,11 @@
 #ifndef EMULATOR_ROM_H
 #define EMULATOR_ROM_H
 
+#include <memory.h>
+#include <stdint.h>
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //  https://www.nesdev.org/wiki/NES_2.0
 //
-#include <stdint.h>
 
 struct nes_romhdr_t
 {
@@ -36,6 +37,7 @@ struct nes_rom_info_t
     uint16_t prg_size, chr_size;
     int      mapper;
     int      nametable_mirror_type;
+    //    void ( *mapper_write_handler )( addr_t offset );
 };
 
 int  read_rom_mapper( int argc, char **argv );

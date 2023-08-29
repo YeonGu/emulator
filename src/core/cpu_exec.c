@@ -8,9 +8,9 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "configs.h"
+#include "cpu.h"
+#include "cpu_datas.h"
 #include "ppu-reg.h"
-#include <cpu.h>
-#include <cpu_datas.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,7 +18,7 @@
 struct cpu_6502_t cpu = {};
 void              cpu_exec_once( FILE *file );
 static uint32_t   nr_insts_exec;
-long long         nr_cycles = 7;
+int64_t           nr_cycles = 7;
 
 //////////////////////////////////////////////////////////////////////
 // static struct cpu_6502_inst_t inst[ 256 ] = {};

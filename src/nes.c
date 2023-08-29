@@ -45,7 +45,7 @@ void nes_mainloop()
         set_ppu_nmi( false );
     }
 
-    printf( "Exited NES mainloop.\n" );
+    printf( "Exit NES mainloop.\n" );
 }
 
 int sdl_test()
@@ -74,23 +74,23 @@ int sdl_test()
     }
 
     // 等待窗口关闭
-    bool      quit = false;
-    SDL_Event event;
-
-    while ( !quit )
-    {
-        while ( SDL_PollEvent( &event ) )
-        {
-            if ( event.type == SDL_QUIT )
-            {
-                quit = true;
-            }
-        }
-    }
-
-    // 清理SDL
-    SDL_DestroyWindow( window );
-    SDL_Quit();
+    //    bool      quit = false;
+    //    SDL_Event event;
+    //
+    //    while ( !quit )
+    //    {
+    //        while ( SDL_PollEvent( &event ) )
+    //        {
+    //            if ( event.type == SDL_QUIT )
+    //            {
+    //                quit = true;
+    //            }
+    //        }
+    //    }
+    //
+    //    // 清理SDL
+    //    SDL_DestroyWindow( window );
+    //    SDL_Quit();
 
     return 0;
 }

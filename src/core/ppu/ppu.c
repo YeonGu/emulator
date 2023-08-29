@@ -61,8 +61,8 @@ void          ppu_reg_write_handler( addr_t idx, uint8_t data ) // after write
     case 0x7: // PPUDATA.   The VRAM address increse is in $2000 bit 2:I (0: add 1, going across; 1: add 32, going down)
               // Write to vram_addr...
         if ( ppuaddr_w ) assert( 0 );
-        if ( vram_addr < 0x2000 )
-            break;
+        //        if ( vram_addr < 0x2000 )
+        //            break;
         ppu_addr_write( vram_addr % 0x4000, ppu_reg.ppudata );
         //        if ( !is_ppu_nmi_set() )
         //            break;

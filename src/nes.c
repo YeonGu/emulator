@@ -41,10 +41,10 @@ void nes_mainloop()
     //    cpu_exec( 300 );
     //    set_ppu_nmi( false );
 
-    int i = 50;
-    while ( i-- )
+    int i = 10;
+    while ( 1 )
     {
-        cpu_exec( 20000 );
+        cpu_exec( 29780 );
         set_ppu_nmi( true );
 
         printf( "cpu enter int %d\n", 100 - i );

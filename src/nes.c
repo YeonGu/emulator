@@ -17,6 +17,8 @@ void nes_mainloop()
     printf( "Entered NES mainloop.\n" );
     cpu_exec( 15000 );
 
+    set_ppu_nmi_enable( true );
+
     set_ppu_nmi( true );
     cpu_call_interrupt();
     cpu_exec( 300 );
@@ -24,10 +26,10 @@ void nes_mainloop()
 
     printf( "\n\nCYCLE 1....\n\n" );
 
-    int i = 100;
+    int i = 10;
     while ( i-- )
     {
-        cpu_exec( 3000 );
+        cpu_exec( 10000 );
         set_ppu_nmi( true );
         cpu_call_interrupt();
         cpu_exec( 300 );

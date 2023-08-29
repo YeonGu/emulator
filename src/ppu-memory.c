@@ -8,7 +8,7 @@
 ///////////////////////////////////////////////////////////////////////
 #include <ppu-memory.h>
 
-static uint8_t ciram_0[ 0x0400 ]; // vram
+static uint8_t ciram_0[ 0x0400 ]; // vram / nametable
 static uint8_t ciram_1[ 0x0400 ];
 
 static struct ppu_mem_map_t ppu_memory_map[ 16 ];

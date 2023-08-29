@@ -31,8 +31,8 @@ void init_ppu()
 
 // https://www.nesdev.org/wiki/PPU_registers
 static addr_t vram_addr;
-static bool   ppuaddr_w = false; // true: write PPUADDR NOT complete.    | false: write PPUADDR complete.
-void          ppu_reg_write_handler( addr_t idx, uint8_t data )
+static bool   ppuaddr_w = false;                                // true: write PPUADDR NOT complete.    | false: write PPUADDR complete.
+void          ppu_reg_write_handler( addr_t idx, uint8_t data ) // after write
 {
     printf( "PPU register write at reg 0x%02x, $%02x\n", idx, data );
     switch ( idx )
@@ -53,9 +53,13 @@ void          ppu_reg_write_handler( addr_t idx, uint8_t data )
         vram_addr |= ppu_reg.ppuaddr;
         ppuaddr_w = !ppuaddr_w;
         if ( !ppuaddr_w ) vram_addr %= 0x4000;
+        break;
 
     case 0x7: // PPUDATA.   The VRAM address increse is in $2000 bit 2:I (0: add 1, going across; 1: add 32, going down)
+              // Write to vram_addr...
+        ppu_addr_write( vram_addr, ppu_reg.ppudata );
         vram_addr += ( ppu_reg.ppuctrl.flag.I ) ? 32 : 1;
+        break;
     default:
         break;
     }

@@ -49,6 +49,9 @@ struct ppu_reg_t
 }; // Mapped to ppu_reg in cpu_memory_mapper
 
 bool is_ppu_nmi_set();
+bool is_ppu_nmi_enable();
+
 void set_ppu_nmi( bool v );
+void set_ppu_nmi_enable( bool v );
 
 #endif // EMULATOR_PPU_REG_H

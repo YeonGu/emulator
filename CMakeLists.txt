@@ -3,7 +3,10 @@ project(emulator C)
 
 set(CMAKE_C_STANDARD 11)
 
+set(SDL2_LIB_DIR D:/Library/clibs/SDL2-2.28.2/x86_64-w64-mingw32)
+
 include_directories(inc)
+include_directories(${SDL2_LIB_DIR}\\include)
 
 add_executable(emulator
         inc/rom.h
@@ -26,3 +29,5 @@ add_executable(emulator
         src/ppu-reg-interface.c
         inc/ppu-memory.h
         src/ppu-memory.c)
+
+target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dll.a ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)

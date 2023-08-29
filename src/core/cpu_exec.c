@@ -33,6 +33,7 @@ void cpu_exec_once( FILE *file )
     nr_insts_exec++;
     addr_t  pc     = cpu.pc;
     uint8_t opcode = vaddr_read( cpu.pc );
+    if ( opcode == 0x40 ) printf( "CPU Return Int\n" );
 
 #ifdef CONFIG_DIFFTEST
     char itrace_log[ 64 ];
@@ -60,7 +61,7 @@ void cpu_exec_once( FILE *file )
 #define STACK_PUSH_( data ) vaddr_write( STACKADD( cpu.sp-- ), data )
 void cpu_call_interrupt()
 {
-    printf( " CPU entered NMI. CYC=%lld\n", nr_cycles );
+    //    printf( " CPU entered NMI. CYC=%lld\n", nr_cycles );
     if ( !is_ppu_nmi_set() )
         return;
 
@@ -78,6 +79,8 @@ void cpu_call_interrupt()
     STACK_PUSH_( cpu.pc );
     nr_cycles += 4;
     STACK_PUSH_( cpu.status.ps & 0b11001111 );
+    cpu.status.ps &= 0b11001111;
+    cpu.status.ps |= 0b100000;
     cpu.pc = NMI_VECTOR;
     nr_cycles += 3;
 }

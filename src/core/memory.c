@@ -34,10 +34,10 @@ void vaddr_write( addr_t addr, uint8_t data )
     //    assert( map );
 
     addr_t offset = addr - map->nes_begin;
-    if ( ( addr <= 0x2007 && addr >= 0x2000 ) || addr == 0x4014 )
-    {
-        printf( "\tMTRACE: WRITE %02x at %04x (%s)\n", data, addr, map->map_name );
-    }
+    //    if ( ( addr <= 0x2007 && addr >= 0x2000 ) || addr == 0x4014 )
+    //    {
+    //        printf( "\tMTRACE: WRITE %02x at %04x (%s)\n", data, addr, map->map_name );
+    //    }
 
     map->map_begin[ offset ] = data;
     if ( map->mem_write_handler ) map->mem_write_handler( offset, data );

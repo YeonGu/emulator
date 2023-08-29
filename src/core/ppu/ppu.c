@@ -34,7 +34,8 @@ static addr_t vram_addr;
 static bool   ppuaddr_w = false;                                // true: write PPUADDR NOT complete.    | false: write PPUADDR complete.
 void          ppu_reg_write_handler( addr_t idx, uint8_t data ) // after write
 {
-    printf( "PPU register write at reg 0x%02x, $%02x\n", idx, data );
+    printf( "PPU register write at reg 0x%02x, pvram = %04x, $%02x\n", idx, vram_addr, data );
+
     switch ( idx )
     {
     case 0x4: // OAM_DATA. https://www.nesdev.org/wiki/PPU_registers#OAMDATA
@@ -49,15 +50,22 @@ void          ppu_reg_write_handler( addr_t idx, uint8_t data ) // after write
         printf( "OAM DATA not implemented...\n" );
         break;
     case 0x6: // PPU_ADDR.  >> write x2 (H,L)
+              //        if ( !( vram_addr & 0x00FF ) && ppu_reg.ppuaddr == 0 )
+              //            break;
         vram_addr <<= 8;
         vram_addr |= ppu_reg.ppuaddr;
         ppuaddr_w = !ppuaddr_w;
-        if ( !ppuaddr_w ) vram_addr %= 0x4000;
+        //        if ( !ppuaddr_w ) vram_addr %= 0x4000;
         break;
 
     case 0x7: // PPUDATA.   The VRAM address increse is in $2000 bit 2:I (0: add 1, going across; 1: add 32, going down)
               // Write to vram_addr...
-        ppu_addr_write( vram_addr, ppu_reg.ppudata );
+        if ( ppuaddr_w ) assert( 0 );
+        if ( vram_addr < 0x2000 )
+            break;
+        ppu_addr_write( vram_addr % 0x4000, ppu_reg.ppudata );
+        //        if ( !is_ppu_nmi_set() )
+        //            break;
         vram_addr += ( ppu_reg.ppuctrl.flag.I ) ? 32 : 1;
         break;
     default:
@@ -66,7 +74,7 @@ void          ppu_reg_write_handler( addr_t idx, uint8_t data ) // after write
 }
 void ppu_reg_read_handler( addr_t idx )
 {
-    printf( "PPU register read at reg 0x%02x.\n", idx );
+    //    printf( "PPU register read at reg 0x%02x.\n", idx );
     switch ( idx )
     {
     case 0x7: // PPUDATA.   The VRAM address increse is in $2000 bit 2:I (0: add 1, going across; 1: add 32, going down)
@@ -76,7 +84,7 @@ void ppu_reg_read_handler( addr_t idx )
             assert( 0 );
         }
         ppu_reg.ppudata = ppu_addr_read( vram_addr );
-        vram_addr += ( ppu_reg.ppuctrl.flag.I ) ? 32 : 1;
+        //        vram_addr += ( ppu_reg.ppuctrl.flag.I ) ? 32 : 1;
         break;
 
     default:

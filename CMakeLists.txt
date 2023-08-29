@@ -29,6 +29,7 @@ add_executable(emulator
         src/core/ppu/ppu-reg-interface.c
         inc/ppu-memory.h
         src/core/ppu/ppu-memory.c
-        src/core/ppu/ppu-palette.c)
+        src/core/ppu/ppu-palette.c
+        src/core/ppu/render.c)
 
 target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dll.a ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)

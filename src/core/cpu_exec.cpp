@@ -10,12 +10,11 @@
 #include "configs.h"
 #include "cpu.h"
 #include "cpu_datas.h"
-// #include "ppu-reg.h"
-#include "ppu.h"
-#include <functional>
+#include "ppu-reg.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <functional>
 #include <vector>
 
 struct cpu_6502_t cpu = {};
@@ -104,7 +103,7 @@ void cpu_call_interrupt()
 #define NEGATIVE_ cpu.status.flag.negative
 
 #define INSTPAT( inst_name, code, ADDR_MODE, ... )                                                                   \
-    opcode_map[ code ] = []() -> void {                                                                              \
+    opcode_map[ code ] = []() -> void {                                                                             \
         switch ( ADDRMODE( ADDR_MODE ) )                                                                             \
         {                                                                                                            \
             CASE( ADDRMODE( IMPLICIT ), imm = 0,                                                                     \
@@ -178,7 +177,7 @@ void cpu_call_interrupt()
         }                                                                                                            \
         nr_cycles += inst_base_cycles[ code ];                                                                       \
         __VA_ARGS__;                                                                                                 \
-    };
+        }
 
 #define CPU_NOP_ imm = 0
 
@@ -200,7 +199,7 @@ void cpu_call_interrupt()
 
 #define CYC( a ) nr_cycles += a
 
-std::vector<std::function<void( void )>> opcode_map;
+std::vector<std::function<void(void)>> opcode_map;
 
 addr_t indirect_tmp;
 
@@ -220,17 +219,17 @@ uint8_t ans;
 
 inline void cpu_decode_exec( uint8_t opcode )
 {
-    opcode_map[ opcode ]();
+    opcode_map[opcode]();
     imm = 0;
 }
 
 void cpu_opcode_register()
 {
-    opcode_map = std::vector<std::function<void( void )>>( 0x100, []() -> void {
+    opcode_map = std::vector<std::function<void(void)>>(0x100,[]() -> void {
         printf( "UNKNOWN OPCODE.\n" );
         system( "pause" );
         assert( 0 );
-    } );
+    });
     // TODO: BRK Interrupt
     INSTPAT( "BRK", 0x00, IMPLICIT );
 

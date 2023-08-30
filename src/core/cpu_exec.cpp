@@ -177,7 +177,7 @@ void cpu_call_interrupt()
         }                                                                                                            \
         nr_cycles += inst_base_cycles[ code ];                                                                       \
         __VA_ARGS__;                                                                                                 \
-        };
+        }
 
 #define CPU_NOP_ imm = 0
 

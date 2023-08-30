@@ -8,8 +8,10 @@
 #include <cstdint>
 #include <vector>
 
-#define addr_t uint16_t
-#define byte uint8_t
+// #define addr_t uint16_t
+// #define byte uint8_t
+using addr_t = uint16_t;
+using byte   = uint8_t;
 struct mem_map_t
 {
     addr_t addr;
@@ -51,6 +53,8 @@ class ppu
     byte ppudata   = 0; // $2007
     byte oamdma    = 0; // $4014
 
+    byte &map_addr( addr_t addr );
+
   public:
     ppu( byte *chr_rom, int screen_arrangement );
     ~ppu() = default;
@@ -58,7 +62,7 @@ class ppu
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Memory
     byte  mread( addr_t addr );
-    byte  mwrite( addr_t addr, byte data );
+    void  mwrite( addr_t addr, byte data );
     byte &get_reg( int idx )
     {
         assert( idx >= 0 && idx <= 7 );

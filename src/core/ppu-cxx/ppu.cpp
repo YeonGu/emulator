@@ -55,11 +55,30 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     palette_map[ 0x1F ] = sp_palette[ 3 ] + 2;
 }
 
+uint8_t &ppu::map_addr( uint16_t addr )
+{
+    addr %= 0x4000;
+    if ( addr >= 0x3F00 ) // Pallete index
+        return *palette_map[ addr & 0x1F ];
+    if ( addr < 0x2000 ) // Pattern table
+        return *( pattern_table_0 + addr );
+
+    for ( auto it = mmap.rbegin(); it != mmap.rend(); it++ )
+    {
+        if ( it->addr > addr )
+            continue;
+        if ( !it->enable_mirror )
+            return *( it->map + ( addr - it->addr ) );
+
+        return map_addr( it->mirror_addr + ( addr - it->addr ) );
+    }
+}
 uint8_t ppu::mread( addr_t addr ) // 3F00 split search
 {
+    return map_addr( addr );
 }
 
-uint8_t ppu::mwrite( addr_t addr, byte data )
+void ppu::mwrite( addr_t addr, byte data )
 {
 }
 

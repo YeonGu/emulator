@@ -7,10 +7,11 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
+#include "ppu.h"
 #include <SDL2/SDL.h>
 #include <cpu.h>
-#include <ppu-reg.h>
-#include <stdio.h>
+#include <cstdio>
+// #include <ppu-reg.h>
 
 void cpu_call_interrupt();
 int  sdl_test();
@@ -22,20 +23,17 @@ SDL_Texture  *texture;
 SDL_Surface  *surface;
 
 static uint32_t vmem[ 256 * 240 ];
+uint8_t        *get_chr_rom( int idx );
 
 void nes_mainloop()
 {
+    ppu *ppuinst = new ppu( get_chr_rom( 0 ), HORIZON_SCREEN );
 
     sdl_test();
     printf( "Entered NES mainloop.\n" );
     cpu_exec( 15000 );
 
     set_ppu_nmi_enable( true );
-
-    //    set_ppu_nmi( true );
-    //    cpu_call_interrupt();
-    //    cpu_exec( 300 );
-    //    set_ppu_nmi( false );
 
     int i = 10;
     while ( i-- )
@@ -44,25 +42,23 @@ void nes_mainloop()
         set_ppu_nmi( true );
 
         printf( "cpu enter int %d\n", 100 - i );
-        cpu_call_interrupt();
-        //        cpu_exec( 1400 );
-        //        set_ppu_nmi( false );
-        //        cpu_exec( 400 )
-        render_bg( vmem );
-        SDL_UpdateTexture( texture, NULL, vmem, 256 * sizeof( uint32_t ) );
+        cpu_call_interrupt(); // FIXME: check interrupt during execution
+
+        ppuinst->render_bg( vmem );
+        SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );
         SDL_RenderClear( renderer );
-        SDL_RenderCopy( renderer, texture, NULL, NULL );
+        SDL_RenderCopy( renderer, texture, nullptr, nullptr );
         SDL_RenderPresent( renderer );
 
         SDL_Event event;
-        while (SDL_PollEvent(&event)){
-            if(event.type == SDL_QUIT) [[unlikely]]
+        while ( SDL_PollEvent( &event ) )
+        {
+            if ( event.type == SDL_QUIT ) [[unlikely]]
             {
-                exit(0);
+                exit( 0 );
             }
         }
     }
-    cpu_exec( 1000 );
     system( "pause" );
     printf( "Exit NES mainloop.\n" );
 }

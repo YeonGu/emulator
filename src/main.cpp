@@ -8,9 +8,8 @@
 #include "../inc/rom.h"
 #include "nes.h"
 #include <cpu.h>
-#include <ppu.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 int main( int argc, char *argv[] )
 {
@@ -18,7 +17,7 @@ int main( int argc, char *argv[] )
                                    // read_rom() -> read_info() -> init_cpu_mapper()
 
     init_cpu(); // Init CPU (RESET vector). CPU Power up state...
-    init_ppu(); // Init PPU. PPU Power up state...
+                //    init_ppu(); // Init PPU. PPU Power up state...
 
     nes_mainloop();
 

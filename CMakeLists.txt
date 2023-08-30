@@ -22,19 +22,19 @@ add_executable(emulator
         inc/configs.h
         inc/cpu_datas.h
         src/core/mapper.cpp
-        inc/ppu-reg.h
+        #        inc/ppu-reg.h
         src/nes.cpp
         src/nes.cpp
         inc/nes.h
-        src/core/ppu/ppu.cpp
-        inc/ppu.h
-        src/core/ppu/ppu-reg-interface.cpp
-        inc/ppu-memory.h
-        src/core/ppu/ppu-memory.cpp
-        src/core/ppu/ppu-palette.cpp
-        src/core/ppu/render.cpp
+        #        src/core/ppu/ppu.cpp
+        #        inc/ppu.h
+        #        src/core/ppu/ppu-reg-interface.cpp
+        #        inc/ppu-memory.h
+        #        src/core/ppu/ppu-memory.cpp
+        #        src/core/ppu/ppu-palette.cpp
+        #        src/core/ppu/render.cpp
         src/core/ppu-cxx/ppu.cpp
-        src/core/ppu-cxx/ppu.h)
+        inc/ppu.h)
 
 #target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dylib ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)
 target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dll.a ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)

@@ -8,7 +8,6 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "memory.h"
-#include "ppu-reg.h"
 
 struct cpu_mem_map_t cpu_memory_mapper[ 16 ];
 int                  nr_cpu_mapper;
@@ -66,9 +65,9 @@ void init_mapper( struct nes_rom_info_t *info )
     }
 
     // TODO: Mirror Space?
-    NEW_MAP( "ppu_registers", 0x2000, 0x0008, (uint8_t *) &ppu_reg );
+    //    NEW_MAP( "ppu_registers", 0x2000, 0x0008, (uint8_t *) &ppu_reg );
     NEW_MAP( "apu_registers", 0x4000, 0x0014, apu_io_reg );
-    NEW_MAP( "oamdma", 0x4014, 1, &oamdma );
+    //    NEW_MAP( "oamdma", 0x4014, 1, &oamdma );
     NEW_MAP( "snd_chn", 0x4015, 1, &apu_snd_chn );
     NEW_MAP( "joystick", 0x4016, 2, joystick );
 

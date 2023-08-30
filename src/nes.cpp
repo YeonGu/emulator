@@ -11,6 +11,7 @@
 #include <cpu.h>
 #include <ppu-reg.h>
 #include <stdio.h>
+
 void cpu_call_interrupt();
 int  sdl_test();
 void render_bg( uint32_t *vmem );
@@ -51,13 +52,15 @@ void nes_mainloop()
         cpu_call_interrupt();
         //        cpu_exec( 1400 );
         //        set_ppu_nmi( false );
-        //        cpu_exec( 400 );
-
+        //        cpu_exec( 400 )
         render_bg( vmem );
         SDL_UpdateTexture( texture, NULL, vmem, 256 * sizeof( uint32_t ) );
         SDL_RenderClear( renderer );
         SDL_RenderCopy( renderer, texture, NULL, NULL );
         SDL_RenderPresent( renderer );
+
+        SDL_Event e;
+        while (SDL_PollEvent(&e));
     }
     cpu_exec( 1000 );
     system( "pause" );
@@ -75,7 +78,7 @@ int sdl_test()
 
     // 创建窗口
     SDL_Window *sdlwindow = SDL_CreateWindow(
-        "SDL窗口",               // 窗口标题
+        "NES EMULATOR",               // 窗口标题
         SDL_WINDOWPOS_UNDEFINED, // 窗口的初始位置
         SDL_WINDOWPOS_UNDEFINED,
         256,             // 窗口的宽度

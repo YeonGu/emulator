@@ -26,6 +26,8 @@ int64_t           nr_cycles = 7;
 extern addr_t RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 //////////////////////////////////////////////////////////////////////
 
+;
+
 void cpu_decode_exec( uint8_t opcode );
 void cpu_exec_once( FILE *file )
 {

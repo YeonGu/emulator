@@ -25,12 +25,7 @@ static uint32_t vmem[ 256 * 240 ];
 
 void nes_mainloop()
 {
-    //    if ( SDL_Init( SDL_INIT_VIDEO ) < 0 )
-    //    {
-    //        printf( "SDL Init failed" );
-    //        return;
-    //    }
-    //    printf( "SDL Init succeeded" );
+
     sdl_test();
     printf( "Entered NES mainloop.\n" );
     cpu_exec( 15000 );
@@ -43,7 +38,7 @@ void nes_mainloop()
     //    set_ppu_nmi( false );
 
     int i = 10;
-    while ( 1 )
+    while ( i-- )
     {
         cpu_exec( 29780 );
         set_ppu_nmi( true );
@@ -60,7 +55,8 @@ void nes_mainloop()
         SDL_RenderPresent( renderer );
 
         SDL_Event e;
-        while (SDL_PollEvent(&e));
+        while ( SDL_PollEvent( &e ) )
+            ;
     }
     cpu_exec( 1000 );
     system( "pause" );
@@ -78,7 +74,7 @@ int sdl_test()
 
     // 创建窗口
     SDL_Window *sdlwindow = SDL_CreateWindow(
-        "NES EMULATOR",               // 窗口标题
+        "NES EMULATOR",          // 窗口标题
         SDL_WINDOWPOS_UNDEFINED, // 窗口的初始位置
         SDL_WINDOWPOS_UNDEFINED,
         256,             // 窗口的宽度

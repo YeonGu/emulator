@@ -34,7 +34,7 @@ static addr_t vram_addr;
 static bool   ppuaddr_w = false;                                // true: write PPUADDR NOT complete.    | false: write PPUADDR complete.
 void          ppu_reg_write_handler( addr_t idx, uint8_t data ) // after write
 {
-    printf( "PPU register write at reg 0x%02x, pvram = %04x, $%02x\n", idx, vram_addr, data );
+    //    printf( "PPU register write at reg 0x%02x, pvram = %04x, $%02x\n", idx, vram_addr, data );
 
     switch ( idx )
     {

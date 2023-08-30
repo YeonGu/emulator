@@ -32,7 +32,9 @@ add_executable(emulator
         inc/ppu-memory.h
         src/core/ppu/ppu-memory.cpp
         src/core/ppu/ppu-palette.cpp
-        src/core/ppu/render.cpp)
+        src/core/ppu/render.cpp
+        src/core/ppu-cxx/ppu.cpp
+        src/core/ppu-cxx/ppu.h)
 
 #target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dylib ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)
 target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dll.a ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)

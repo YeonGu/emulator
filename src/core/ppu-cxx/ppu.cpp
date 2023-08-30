@@ -32,6 +32,7 @@ static const union tinus_palette_data {
     { 0xA0, 0xFF, 0xF0, 0xFF }, { 0xA0, 0xA0, 0xA0, 0xFF }, { 0x00, 0x00, 0x00, 0xFF }, { 0x00, 0x00, 0x00, 0xFF }
 };
 // clang-format on
+ppu *ppu_inst;
 
 ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     : scr_arrange( screen_arrangement )
@@ -215,4 +216,26 @@ uint32_t ppu::get_bg_color( int x, int y )
     int plte_section = atr_data >> bit_off & 0b11;
 
     return get_bg_palette_color( plte_section * 4 + plte_idx );
+}
+
+bool is_ppu_nmi_enable()
+{
+    return reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg( PPUREG_CTRL ) ).nmi_enable;
+}
+bool is_ppu_nmi_set()
+{
+    return reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg( PPUREG_STATUS ) ).nmi_flag;
+}
+byte get_vram_inc()
+{
+    return reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg( PPUREG_CTRL ) ).vram_inc;
+}
+
+void set_ppu_nmi_enable( bool v )
+{
+    reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg( PPUREG_CTRL ) ).nmi_enable = v;
+}
+void set_ppu_nmi( bool v )
+{
+    reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg( PPUREG_STATUS ) ).nmi_flag = v;
 }

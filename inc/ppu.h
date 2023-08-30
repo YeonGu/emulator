@@ -106,7 +106,6 @@ enum ppu_reg_list
 };
 //////////////////////////////////////////////////////////////////////////////////
 // PPU Register reinterpret
-ppu *ppu_inst;
 struct ppuctrl_flag_t
 {
     byte base_nametable : 2;
@@ -128,11 +127,10 @@ struct ppustatus_flag_t // $2002
                    // pre-render line.
 };
 
-bool is_ppu_nmi_enable() { return reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg( PPUREG_CTRL ) ).nmi_enable; }
-bool is_ppu_nmi_set() { return reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg( PPUREG_STATUS ) ).nmi_flag; }
-byte get_vram_inc() { return reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg( PPUREG_CTRL ) ).vram_inc; }
-
-void set_ppu_nmi_enable( bool v ) { reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg( PPUREG_CTRL ) ).nmi_enable = v; }
-void set_ppu_nmi( bool v ) { reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg( PPUREG_STATUS ) ).nmi_flag = v; }
+bool is_ppu_nmi_enable();
+bool is_ppu_nmi_set();
+byte get_vram_inc();
+void set_ppu_nmi_enable( bool v );
+void set_ppu_nmi( bool v );
 
 #endif // EMULATOR_PPU_H

@@ -3,7 +3,7 @@ project(emulator)
 
 set(CMAKE_C_STANDARD 11)
 
-set(SDL2_LIB_DIR /opt/homebrew/opt/sdl2)
+set(SDL2_LIB_DIR D:/Library/clibs/SDL2-2.28.2/x86_64-w64-mingw32)
 
 include_directories(inc)
 include_directories(${SDL2_LIB_DIR}/include)
@@ -34,5 +34,5 @@ add_executable(emulator
         src/core/ppu/ppu-palette.cpp
         src/core/ppu/render.cpp)
 
-target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dylib ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)
-#target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dll.a ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)
+#target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dylib ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)
+target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dll.a ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)

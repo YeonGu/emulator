@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-const char *rom_file;
+const char           *rom_file;
 struct nes_romhdr_t   rom_hdr;
 struct nes_rom_info_t rom_info;
 
@@ -47,7 +47,7 @@ void read_rom_info();
 int  read_rom_mapper( int argc, char **argv )
 {
     // TODO: get the rom file path...
-    rom_file = "../rom/mario.nes";
+    rom_file = "../rom-fix/nestest.nes";
     //    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\mario.nes";
     if ( argc == 1 )
         printf( "No file target is given. Use the default mario file.\n" );

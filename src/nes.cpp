@@ -54,9 +54,13 @@ void nes_mainloop()
         SDL_RenderCopy( renderer, texture, NULL, NULL );
         SDL_RenderPresent( renderer );
 
-        SDL_Event e;
-        while ( SDL_PollEvent( &e ) )
-            ;
+        SDL_Event event;
+        while (SDL_PollEvent(&event)){
+            if(event.type == SDL_QUIT) [[unlikely]]
+            {
+                exit(0);
+            }
+        }
     }
     cpu_exec( 1000 );
     system( "pause" );

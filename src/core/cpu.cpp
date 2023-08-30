@@ -18,6 +18,9 @@ void cpu_exec_once( FILE *file );
 /**
  * CPU Power on https://www.nesdev.org/wiki/CPU_power_up_state
  * */
+
+void cpu_opcode_register();
+
 void init_cpu()
 {
     printf( "CPU init...\n" );
@@ -26,6 +29,8 @@ void init_cpu()
     cpu.status.ps = 0x24;
     cpu.sp        = 0xFD;
     cpu.pc        = RESET_VECTOR;
+
+    cpu_opcode_register();
 }
 
 void cpu_exec( int cycles )

@@ -27,7 +27,7 @@ uint8_t        *get_chr_rom( int idx );
 
 void nes_mainloop()
 {
-    ppu *ppuinst = new ppu( get_chr_rom( 0 ), HORIZON_SCREEN );
+    ppu_inst = new ppu( get_chr_rom( 0 ), HORIZON_SCREEN );
 
     sdl_test();
     printf( "Entered NES mainloop.\n" );
@@ -44,7 +44,7 @@ void nes_mainloop()
         printf( "cpu enter int %d\n", 100 - i );
         cpu_call_interrupt(); // FIXME: check interrupt during execution
 
-        ppuinst->render_bg( vmem );
+        ppu_inst->render_bg( vmem );
         SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );
         SDL_RenderClear( renderer );
         SDL_RenderCopy( renderer, texture, nullptr, nullptr );

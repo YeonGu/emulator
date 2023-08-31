@@ -40,7 +40,7 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     //    ppustatus = 0b10100000;
     memcpy( pattern_table_0, chr_rom, sizeof( pattern_table_0 ) );
     memcpy( pattern_table_1, chr_rom + sizeof( pattern_table_0 ), sizeof( pattern_table_0 ) );
-    ppu_inst = this;
+    //  ppu_inst = this;
 
     mmap.emplace_back<mem_map_t>( { 0x0000, 0x1000, pattern_table_0 } );
     mmap.emplace_back<mem_map_t>( { 0x1000, 0x1000, pattern_table_1 } );

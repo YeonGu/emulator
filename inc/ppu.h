@@ -26,18 +26,29 @@ class ppu
   private:
     int scr_arrange;
 
+    ////////////////////////////////////////////////////////////////////////////////////////
+    /// PPU status. see: PPU rendering
+    int      scanline   = -1;
+    int      line_cycle = 0;
+    uint64_t frame_cnt  = 0;
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    // PPU internal regs. see: PPU scroll
+    addr_t vram_addr    = 0;
+    addr_t tmp_addr     = 0;
+    byte   finex_scroll = 0;
+    bool   vaddr_wr_h   = true;
+    ////////////////////////////////////////////////////////////////////////////////////////
+    // PPU Memory. https://www.nesdev.org/wiki/PPU_memory_map
     std::vector<mem_map_t> mmap;
     byte                  *palette_map[ 0x20 ] = {};
-    addr_t                 vram_addr           = 0;
-    bool                   vaddr_wr_h          = true;
-    ////////////////////////////////////////////////////////////////////////////////////////
-    // PPU Memory BUS. https://www.nesdev.org/wiki/PPU_memory_map
-    struct {
-        byte pattern_table_0[0x1000]; // Pattern table. $0000 - $0FFF
-        byte pattern_table_1[0x1000]; // Pattern table. $1000 - $1FFF
-    }__attribute__((packed)) pattern_table;
-    byte ciram_0[ 0x0400 ]         = {}; // vram / nametable, $2000
-    byte ciram_1[ 0x0400 ]         = {}; // $2400 (depend on the nametable mirror)
+    struct
+    {
+        byte pattern_table_0[ 0x1000 ]; // Pattern table. $0000 - $0FFF
+        byte pattern_table_1[ 0x1000 ]; // Pattern table. $1000 - $1FFF
+    } __attribute__( ( packed ) ) pattern_tables;
+    byte ciram_0[ 0x0400 ] = {}; // vram / nametable, $2000
+    byte ciram_1[ 0x0400 ] = {}; // $2400 (depend on the nametable mirror)
 
     byte uni_bg_color         = 0;
     byte bg_palette[ 15 ]     = {}; // $3F00 - $3F1F
@@ -66,6 +77,8 @@ class ppu
 
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Memory
+    void step( uint32_t *vmem );
+
     byte  mread( addr_t addr );
     void  mwrite( addr_t addr, byte data );
     byte &get_reg( int idx )

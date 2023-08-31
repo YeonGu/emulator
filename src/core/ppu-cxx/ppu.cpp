@@ -38,8 +38,8 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     : scr_arrange( screen_arrangement )
 {
     //    ppustatus = 0b10100000;
-    memcpy( &pattern_table.pattern_table_0, chr_rom, sizeof( pattern_table.pattern_table_0 ) );
-    memcpy( &pattern_table.pattern_table_1, chr_rom + sizeof( pattern_table.pattern_table_0 ), sizeof( pattern_table.pattern_table_1 ) );
+    memcpy( &pattern_tables.pattern_table_0, chr_rom, sizeof( pattern_tables.pattern_table_0 ) );
+    memcpy( &pattern_tables.pattern_table_1, chr_rom + sizeof( pattern_tables.pattern_table_0 ), sizeof( pattern_tables.pattern_table_1 ) );
     //  ppu_inst = this;
 
     // mmap.emplace_back<mem_map_t>( { 0x0000, 0x1000, pattern_table_0 } );
@@ -90,9 +90,9 @@ uint8_t &ppu::map_addr( uint16_t addr )
     if ( addr >= 0x3F00 ) // Pallete index
         return *palette_map[ addr % 0x20 ];
     else if ( addr >= 0x3000 )
-        addr -= 0x2000;
+        addr -= 0x1000;
     if ( addr < 0x2000 ) // Pattern table
-        return reinterpret_cast<uint8_t &>( *( pattern_table.pattern_table_0 + addr ) );
+        return reinterpret_cast<uint8_t &>( *( pattern_tables.pattern_table_0 + addr ) );
 
     // nametable
     auto it = &mmap[ ( addr % 0x4000 ) / 0x1000 ];
@@ -226,6 +226,36 @@ uint32_t ppu::get_bg_color( int x, int y )
     int plte_section = atr_data >> bit_off & 0b11;
 
     return get_bg_palette_color( plte_section * 4 + plte_idx );
+}
+void ppu::step( uint32_t *vmem )
+{
+    if ( ( scanline == -1 ) && ( line_cycle == 339 ) && ( frame_cnt % 2 ) ) // skip the last pixel in odd frame
+        line_cycle++;
+    else if ( scanline >= 0 && scanline <= 239 ) // Visible-render
+    {
+        if ( !line_cycle )
+            int a = 0;
+        else if ( line_cycle <= 256 )
+        {
+            int offset     = scanline * 256 + line_cycle - 1;
+            vmem[ offset ] = get_bg_color( line_cycle - 1, scanline );
+        }
+    }
+    else if ( scanline == 241 && line_cycle == 1 )
+    {
+        reinterpret_cast<ppustatus_flag_t &>( get_reg( PPUREG_STATUS ) ).nmi_flag = 1;
+    }
+    else if ( scanline == 260 && line_cycle == 340 )
+    {
+        reinterpret_cast<ppustatus_flag_t &>( get_reg( PPUREG_STATUS ) ).nmi_flag = 0;
+    }
+
+    // status update
+    if ( line_cycle == 340 )
+        scanline = ( scanline == 260 ) ? -1 : scanline + 1;
+    if ( line_cycle == 340 && ( scanline == 260 ) )
+        frame_cnt++;
+    line_cycle = ( line_cycle == 340 ) ? 0 : line_cycle + 1;
 }
 
 bool is_ppu_nmi_enable()

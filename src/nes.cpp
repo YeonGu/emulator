@@ -25,6 +25,7 @@ SDL_Surface  *surface;
 static uint32_t vmem[ 256 * 240 ];
 uint8_t        *get_chr_rom( int idx );
 
+void test_loop();
 void nes_mainloop()
 {
     ppu_inst = new ppu( get_chr_rom( 0 ), HORIZON_SCREEN );
@@ -34,21 +35,54 @@ void nes_mainloop()
     cpu_exec( 39000 );
 
     set_ppu_nmi_enable( true );
+    test_loop();
+    //    test_loop
+    //    int i = 2;
+    //    while ( 1 )
+    //    {
+    //
+    //        cpu_exec( 29780 );
+    //        set_ppu_nmi( true );
+    //        printf( "cpu enter int %d\n", 100 - i );
+    //
+    //        ppu_inst->render_bg( vmem );
+    //        SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );
+    //        SDL_RenderClear( renderer );
+    //        SDL_RenderCopy( renderer, texture, nullptr, nullptr );
+    //        SDL_RenderPresent( renderer );
+    //
+    //        SDL_Event event;
+    //        while ( SDL_PollEvent( &event ) )
+    //        {
+    //            if ( event.type == SDL_QUIT ) [[unlikely]]
+    //            {
+    //                exit( 0 );
+    //            }
+    //        }
+    //    }
+    system( "pause" );
+    printf( "Exit NES mainloop.\n" );
+}
 
-    int i = 6;
+void test_loop()
+{
     while ( 1 )
     {
+        int cyc = 29781;
+        while ( cyc-- )
+        {
+            ppu_inst->step( vmem );
+            ppu_inst->step( vmem );
+            ppu_inst->step( vmem );
+            cpu_step();
+        }
 
-        cpu_exec( 29780 );
-        set_ppu_nmi( true );
-        printf( "cpu enter int %d\n", 100 - i );
-
+        printf( "loop 1 frame \n" );
         ppu_inst->render_bg( vmem );
         SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );
         SDL_RenderClear( renderer );
         SDL_RenderCopy( renderer, texture, nullptr, nullptr );
         SDL_RenderPresent( renderer );
-
         SDL_Event event;
         while ( SDL_PollEvent( &event ) )
         {
@@ -58,8 +92,6 @@ void nes_mainloop()
             }
         }
     }
-    system( "pause" );
-    printf( "Exit NES mainloop.\n" );
 }
 
 int sdl_test()

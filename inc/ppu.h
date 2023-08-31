@@ -92,6 +92,7 @@ class ppu
 
     friend void ppu_reg_write( int idx, byte data );
     friend byte ppu_reg_read( int idx );
+    friend void test_loop();
 };
 
 extern ppu *ppu_inst;

@@ -32,7 +32,7 @@ void nes_mainloop()
 
     sdl_test();
     printf( "Entered NES mainloop.\n" );
-    cpu_exec( 39000 );
+    cpu_exec( 39900 );
 
     set_ppu_nmi_enable( true );
     test_loop();
@@ -66,7 +66,8 @@ void nes_mainloop()
 
 void test_loop()
 {
-    while ( 1 )
+    int test_times = 30;
+    while ( test_times-- )
     {
         int cyc = 29781;
         while ( cyc-- )
@@ -91,6 +92,14 @@ void test_loop()
                 exit( 0 );
             }
         }
+    }
+    for ( auto i : ppu_inst->ciram_0 )
+    {
+        static int addr = 0x2000;
+        printf( "%02x ", i );
+        addr++;
+        if ( !( addr % 0x20 ) )
+            printf( "\n" );
     }
 }
 

@@ -31,6 +31,7 @@ static const union tinus_palette_data {
     { 0xFF, 0xF0, 0x90, 0xFF }, { 0xC8, 0xF0, 0x80, 0xFF }, { 0xA0, 0xF0, 0xA0, 0xFF }, { 0xA0, 0xFF, 0xC8, 0xFF },
     { 0xA0, 0xFF, 0xF0, 0xFF }, { 0xA0, 0xA0, 0xA0, 0xFF }, { 0x00, 0x00, 0x00, 0xFF }, { 0x00, 0x00, 0x00, 0xFF }
 };
+
 // clang-format on
 ppu *ppu_inst;
 
@@ -66,19 +67,25 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     {
         palette_map[ i ] = bg_palette + i - 1;
     }
+    palette_map[ 0x04 ] = &uni_bg_color;
+    palette_map[ 0x08 ] = &uni_bg_color;
+    palette_map[ 0x0C ] = &uni_bg_color;
     palette_map[ 0x10 ] = &uni_bg_color;
     palette_map[ 0x11 ] = sp_palette[ 0 ];
     palette_map[ 0x12 ] = sp_palette[ 0 ] + 1;
     palette_map[ 0x13 ] = sp_palette[ 0 ] + 2;
-    palette_map[ 0x14 ] = palette_map[ 0x04 ];
+    //    palette_map[ 0x14 ] = palette_map[ 0x04 ];
+    palette_map[ 0x14 ] = &uni_bg_color;
     palette_map[ 0x15 ] = sp_palette[ 1 ];
     palette_map[ 0x16 ] = sp_palette[ 1 ] + 1;
     palette_map[ 0x17 ] = sp_palette[ 1 ] + 2;
-    palette_map[ 0x18 ] = palette_map[ 0x08 ];
+    //    palette_map[ 0x18 ] = palette_map[ 0x08 ];
+    palette_map[ 0x18 ] = &uni_bg_color;
     palette_map[ 0x19 ] = sp_palette[ 2 ];
     palette_map[ 0x1A ] = sp_palette[ 2 ] + 1;
     palette_map[ 0x1B ] = sp_palette[ 2 ] + 2;
-    palette_map[ 0x1C ] = palette_map[ 0x0C ];
+    //    palette_map[ 0x1C ] = palette_map[ 0x0C ];
+    palette_map[ 0x1C ] = &uni_bg_color;
     palette_map[ 0x1D ] = sp_palette[ 3 ];
     palette_map[ 0x1E ] = sp_palette[ 3 ] + 1;
     palette_map[ 0x1F ] = sp_palette[ 3 ] + 2;
@@ -95,7 +102,7 @@ uint8_t &ppu::map_addr( uint16_t addr )
         return reinterpret_cast<uint8_t &>( *( pattern_tables.pattern_table_0 + addr ) );
 
     // nametable
-    auto it = &mmap[ ( addr % 0x4000 ) / 0x1000 ];
+    auto it = &mmap[ ( ( addr % 0x4000 ) - 0x2000 ) / 0x400 ];
     // if ( !it->enable_mirror )
     return *( it->map + ( addr - it->addr ) );
     // return map_addr( it->mirror_addr + ( addr - it->addr ) );
@@ -107,6 +114,8 @@ uint8_t ppu::mread( addr_t addr ) // 3F00 split search
 
 void ppu::mwrite( addr_t addr, byte data )
 {
+    if ( addr >= 0x3F00 )
+        printf( "write to palette %04x %02x\n", addr, data );
     map_addr( addr ) = data;
 }
 
@@ -133,7 +142,7 @@ void ppu_reg_write( int idx, byte data )
 
     case PPUREG_DATA: // write to ppudata (0x7)
                       //        printf( "PPU data write at %04x, %02x\n", ppu_inst->vram_addr, data );
-                      //        if ( ppu_inst->vram_addr < 0x2000 ) break;
+        //        if ( ppu_inst->vram_addr < 0x2000 ) break;
         ppu_inst->mwrite( ppu_inst->vram_addr, data );
         ppu_inst->vram_addr += ( get_vram_inc() ) ? 32 : 1;
         break;
@@ -183,7 +192,7 @@ uint32_t ppu::get_bg_palette_color( uint8_t index )
         printf( "ERROR: GET BG COLOR OUT OF BOUND!\n" );
         //        assert( 0 );
     }
-    return tines_stdpalette[ bg_palette[ index - 1 ] ].data;
+    return tines_stdpalette[ *palette_map[ index ] ].data;
 }
 
 void ppu::render_bg( uint32_t *vmem )
@@ -204,12 +213,14 @@ uint32_t ppu::get_bg_color( int x, int y )
     int fine_x = x % 8;
     int fine_y = y % 8;
 
+    // FIXME: scroll...
     addr_t bg_nt_base = 0x2000;
 
     addr_t pat_addr = mread( tile_y * 32 + tile_x + bg_nt_base ); // Pattern Table index
     pat_addr <<= 4;
     pat_addr |= fine_y; // Pattern Table row. TODO: another pat table for bg
-    pat_addr |= ( reinterpret_cast<ppuctrl_flag_t &>( ppuctrl ).bg_pattern_base ) ? 0x8 : 0;
+                        //    pat_addr |= ( reinterpret_cast<ppuctrl_flag_t &>( ppuctrl ).bg_pattern_base ) ? 0x8 : 0;
+    pat_addr += 0x1000;
     // TODO: flip?
     uint8_t pattern_l = mread( pat_addr ) >> ( 7 - fine_x ) & 1;
     uint8_t pattern_h = mread( pat_addr + 8 ) >> ( 7 - fine_x ) & 1;
@@ -222,7 +233,7 @@ uint32_t ppu::get_bg_color( int x, int y )
     fine_y      = y % 32 / 16;
     int bit_off = fine_x * 2 + fine_y * 4; // Get Dx for palette index
 
-    int atr_data     = mread( atr_y * 8 + atr_x );
+    int atr_data     = mread( atr_y * 8 + atr_x + bg_nt_base + 0x3C0 );
     int plte_section = atr_data >> bit_off & 0b11;
 
     return get_bg_palette_color( plte_section * 4 + plte_idx );

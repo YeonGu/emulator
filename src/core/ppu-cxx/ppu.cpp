@@ -37,6 +37,7 @@ ppu *ppu_inst;
 ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     : scr_arrange( screen_arrangement )
 {
+    //    ppustatus = 0b10100000;
     memcpy( pattern_table_0, chr_rom, sizeof( pattern_table_0 ) );
     memcpy( pattern_table_1, chr_rom + sizeof( pattern_table_0 ), sizeof( pattern_table_0 ) );
     ppu_inst = this;
@@ -135,7 +136,7 @@ void ppu_reg_write( int idx, byte data )
 
     case PPUREG_DATA: // write to ppudata (0x7)
                       //        printf( "PPU data write at %04x, %02x\n", ppu_inst->vram_addr, data );
-        //        if ( ppu_inst->vram_addr < 0x2000 ) break;
+                      //        if ( ppu_inst->vram_addr < 0x2000 ) break;
         ppu_inst->mwrite( ppu_inst->vram_addr, data );
         ppu_inst->vram_addr += ( get_vram_inc() ) ? 32 : 1;
         break;
@@ -205,7 +206,7 @@ uint32_t ppu::get_bg_color( int x, int y )
     addr_t pat_addr = mread( tile_y * 32 + tile_x + bg_nt_base ); // Pattern Table index
     pat_addr <<= 4;
     pat_addr |= fine_y; // Pattern Table row. TODO: another pat table for bg
-                        //    pat_addr |= 0x8;
+    pat_addr |= ( reinterpret_cast<ppuctrl_flag_t &>( ppuctrl ).bg_pattern_base ) ? 0x8 : 0;
     // TODO: flip?
     uint8_t pattern_l = mread( pat_addr ) >> ( 7 - fine_x ) & 1;
     uint8_t pattern_h = mread( pat_addr + 8 ) >> ( 7 - fine_x ) & 1;

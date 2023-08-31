@@ -20,7 +20,8 @@
 struct cpu_6502_t cpu = {};
 void              cpu_exec_once( FILE *file );
 static uint32_t   nr_insts_exec;
-int64_t           nr_cycles = 7;
+int64_t           nr_cycles;
+int64_t           current_cycles;
 
 // using byte = uint8_t;
 // bool is_ppu_nmi_enable();
@@ -33,6 +34,12 @@ int64_t           nr_cycles = 7;
 
 extern addr_t RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 //////////////////////////////////////////////////////////////////////
+void cpu_step()
+{
+    if ( current_cycles++ < nr_cycles )
+        return;
+    cpu_exec_once( nullptr );
+}
 
 void cpu_decode_exec( uint8_t opcode );
 void cpu_exec_once( FILE *file )
@@ -569,7 +576,7 @@ void cpu_opcode_register()
     INSTPAT( "LAX", 0xB3, INDIRECT_INDEXED, LAX_( M ), CYC( cross_page ) );
 
     // SAX - Store Accumulator & x
-#define SAX_( addr ) vaddr_write( addr, cpu.accumulator & cpu.x )
+#define SAX_( addr ) vaddr_write( addr, cpu.accumulator &cpu.x )
     INSTPAT( "SAX", 0x87, ZEROPAGE, SAX_( zeropage_addr ) );
     INSTPAT( "SAX", 0x97, ZEROPAGE_Y, SAX_( zeropage_addr ) );
     INSTPAT( "SAX", 0x8F, ABSOLUTE, SAX_( absolute_addr ) );

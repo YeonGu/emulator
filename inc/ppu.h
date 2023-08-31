@@ -17,8 +17,8 @@ struct mem_map_t
     addr_t addr;
     addr_t size;
     byte  *map;
-    bool   enable_mirror;
-    addr_t mirror_addr;
+    //  bool   enable_mirror;
+    //  addr_t mirror_addr;
 };
 
 class ppu
@@ -32,8 +32,10 @@ class ppu
     bool                   vaddr_wr_h          = true;
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Memory BUS. https://www.nesdev.org/wiki/PPU_memory_map
-    byte pattern_table_0[ 0x1000 ] = {}; // Pattern table. $0000 - $0FFF
-    byte pattern_table_1[ 0x1000 ] = {}; // Pattern table. $1000 - $1FFF
+    struct {
+        byte pattern_table_0[0x1000]; // Pattern table. $0000 - $0FFF
+        byte pattern_table_1[0x1000]; // Pattern table. $1000 - $1FFF
+    }__attribute__((packed)) pattern_table;
     byte ciram_0[ 0x0400 ]         = {}; // vram / nametable, $2000
     byte ciram_1[ 0x0400 ]         = {}; // $2400 (depend on the nametable mirror)
 

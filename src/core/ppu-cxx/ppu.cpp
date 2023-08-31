@@ -38,12 +38,12 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     : scr_arrange( screen_arrangement )
 {
     //    ppustatus = 0b10100000;
-    memcpy( pattern_table_0, chr_rom, sizeof( pattern_table_0 ) );
-    memcpy( pattern_table_1, chr_rom + sizeof( pattern_table_0 ), sizeof( pattern_table_0 ) );
+    memcpy( &pattern_table.pattern_table_0, chr_rom, sizeof( pattern_table.pattern_table_0 ) );
+    memcpy( &pattern_table.pattern_table_1, chr_rom + sizeof( pattern_table.pattern_table_0 ), sizeof( pattern_table.pattern_table_1 ) );
     //  ppu_inst = this;
 
-    mmap.emplace_back<mem_map_t>( { 0x0000, 0x1000, pattern_table_0 } );
-    mmap.emplace_back<mem_map_t>( { 0x1000, 0x1000, pattern_table_1 } );
+    //mmap.emplace_back<mem_map_t>( { 0x0000, 0x1000, pattern_table_0 } );
+    //mmap.emplace_back<mem_map_t>( { 0x1000, 0x1000, pattern_table_1 } );
     if ( screen_arrangement == HORIZON_SCREEN )
     {
         mmap.emplace_back<mem_map_t>( { 0x2000, 0x0400, ciram_0 } );
@@ -58,7 +58,7 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
         mmap.emplace_back<mem_map_t>( { 0x2800, 0x0400, ciram_1 } );
         mmap.emplace_back<mem_map_t>( { 0x2C00, 0x0400, ciram_1 } );
     }
-    mmap.emplace_back<mem_map_t>( { 0x3000, 0x0F00, nullptr, true, 0x2000 } );
+    // mmap.emplace_back<mem_map_t>( { 0x3000, 0x0F00, nullptr, true, 0x2000 } );
 
     // $3F00 - Palette RAM
     palette_map[ 0 ] = &uni_bg_color;
@@ -89,19 +89,16 @@ uint8_t &ppu::map_addr( uint16_t addr )
     addr %= 0x4000;
     if ( addr >= 0x3F00 ) // Pallete index
         return *palette_map[ addr % 0x20 ];
+    else if (addr >= 0x3000)
+        addr -= 0x2000;
     if ( addr < 0x2000 ) // Pattern table
-        return *( pattern_table_0 + addr );
+        return reinterpret_cast<uint8_t &>(*(pattern_table.pattern_table_0 + addr));
 
     // nametable
-    for ( auto it = mmap.rbegin(); it != mmap.rend(); it++ )
-    {
-        if ( it->addr > addr )
-            continue;
-        if ( !it->enable_mirror )
-            return *( it->map + ( addr - it->addr ) );
-
-        return map_addr( it->mirror_addr + ( addr - it->addr ) );
-    }
+    auto it = &mmap[(addr % 0x4000) / 0x1000];
+        //if ( !it->enable_mirror )
+        return *( it->map + ( addr - it->addr ) );
+        //return map_addr( it->mirror_addr + ( addr - it->addr ) );
 }
 uint8_t ppu::mread( addr_t addr ) // 3F00 split search
 {

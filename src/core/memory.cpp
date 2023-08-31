@@ -17,7 +17,10 @@ struct cpu_mem_map_t *find_cpu_map( addr_t addr );
 uint8_t vaddr_read( addr_t addr )
 {
     if ( ( addr >= 0x2000 ) && ( addr <= 0x3FFF ) )
+    {
+        //        printf( "read to vaddr %04x %02x\n", addr, ppu_reg_read( addr % 8 ) );
         return ppu_reg_read( addr % 8 );
+    }
     if ( addr == 0x4014 )
         return oamdma_read();
 
@@ -39,6 +42,7 @@ void vaddr_write( addr_t addr, uint8_t data )
 {
     if ( ( addr >= 0x2000 ) && ( addr <= 0x3FFF ) )
     {
+        //        printf( "write to vaddr %04x, %02x\n", addr, data );
         ppu_reg_write( addr % 8, data );
         return;
     }

@@ -29,7 +29,7 @@ class ppu
     std::vector<mem_map_t> mmap;
     byte                  *palette_map[ 0x20 ] = {};
     addr_t                 vram_addr           = 0;
-    bool                   vaddr_wr_h          = false;
+    bool                   vaddr_wr_h          = true;
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Memory BUS. https://www.nesdev.org/wiki/PPU_memory_map
     byte pattern_table_0[ 0x1000 ] = {}; // Pattern table. $0000 - $0FFF
@@ -121,10 +121,10 @@ struct ppustatus_flag_t // $2002
     byte ppu_open_bus : 5;
     byte sp_overflow : 1;
     byte sp_0_hit : 1;
-    byte nmi_flag; // Vertical blank has started (0: not in vblank; 1: in vblank).
-                   // Set at dot 1 of line 241 (the line *after* the post-render
-                   // line); cleared after reading $2002 and at dot 1 of the
-                   // pre-render line.
+    byte nmi_flag : 1; // Vertical blank has started (0: not in vblank; 1: in vblank).
+                       // Set at dot 1 of line 241 (the line *after* the post-render
+                       // line); cleared after reading $2002 and at dot 1 of the
+                       // pre-render line.
 };
 
 bool is_ppu_nmi_enable();

@@ -63,7 +63,7 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     palette_map[ 0 ] = &uni_bg_color;
     for ( int i = 1; i <= 0x0F; ++i )
     {
-        palette_map[ i ] = bg_palette + i;
+        palette_map[ i ] = bg_palette + i - 1;
     }
     palette_map[ 0x10 ] = &uni_bg_color;
     palette_map[ 0x11 ] = sp_palette[ 0 ];
@@ -87,7 +87,7 @@ uint8_t &ppu::map_addr( uint16_t addr )
 {
     addr %= 0x4000;
     if ( addr >= 0x3F00 ) // Pallete index
-        return *palette_map[ addr & 0x1F ];
+        return *palette_map[ addr % 0x20 ];
     if ( addr < 0x2000 ) // Pattern table
         return *( pattern_table_0 + addr );
 
@@ -116,13 +116,15 @@ void ppu_reg_write( int idx, byte data )
 {
     idx %= 8;
     assert( idx <= 7 );
+    //    printf( "PPU data write reg %x, %02x\n", idx, data );
     switch ( idx )
     {
     case PPUREG_ADDR:
+        //        printf( "PPU data write reg 06, %02x\n", data );
         ppu_inst->get_reg( idx ) = data;
         static addr_t tmp_addr;
         if ( ppu_inst->vaddr_wr_h )
-            tmp_addr = tmp_addr & 0x00FF | ( data << 8 ); // Set higher bits in tmp
+            tmp_addr = tmp_addr & 0x00FF | ( (uint16_t) data << 8 ); // Set higher bits in tmp
         else
         {
             tmp_addr            = tmp_addr & 0xFF00 | data; // Set lower bits in tmp, set the vaddr
@@ -132,7 +134,11 @@ void ppu_reg_write( int idx, byte data )
         break;
 
     case PPUREG_DATA: // write to ppudata (0x7)
-
+                      //        printf( "PPU data write at %04x, %02x\n", ppu_inst->vram_addr, data );
+        //        if ( ppu_inst->vram_addr < 0x2000 ) break;
+        ppu_inst->mwrite( ppu_inst->vram_addr, data );
+        ppu_inst->vram_addr += ( get_vram_inc() ) ? 32 : 1;
+        break;
     default:
         ppu_inst->get_reg( idx ) = data;
         break;
@@ -148,7 +154,7 @@ byte ppu_reg_read( int idx )
     static byte readdata_buf;
     // Read PPUDATA
     byte data = ppu_inst->mread( ppu_inst->vram_addr );
-    ppu_inst->vram_addr += ( get_vram_inc() ) ? 1 : 32;
+    //    ppu_inst->vram_addr += ( get_vram_inc() ) ? 32 : 1;
 
     if ( ppu_inst->vram_addr < 0x3F00 )
     {
@@ -167,13 +173,13 @@ byte oamdma_read()
 uint32_t ppu::get_bg_palette_color( uint8_t index )
 {
     if ( !index )
-        return uni_bg_color;
+        return tines_stdpalette[ uni_bg_color ].data;
     if ( index >= 0x10 )
     {
         printf( "ERROR: GET BG COLOR OUT OF BOUND!\n" );
         //        assert( 0 );
     }
-    return tines_stdpalette[ bg_palette[ index % 0x10 - 1 ] ].data;
+    return tines_stdpalette[ bg_palette[ index - 1 ] ].data;
 }
 
 void ppu::render_bg( uint32_t *vmem )

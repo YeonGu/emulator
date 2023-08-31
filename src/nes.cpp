@@ -31,16 +31,16 @@ void nes_mainloop()
 
     sdl_test();
     printf( "Entered NES mainloop.\n" );
-    cpu_exec( 15000 );
+    cpu_exec( 20000 );
 
     set_ppu_nmi_enable( true );
 
-    int i = 10;
-    while ( i-- )
+    int i = 6;
+    while ( 1 )
     {
+
         cpu_exec( 29780 );
         set_ppu_nmi( true );
-
         printf( "cpu enter int %d\n", 100 - i );
         cpu_call_interrupt(); // FIXME: check interrupt during execution
 

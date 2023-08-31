@@ -42,7 +42,6 @@ void nes_mainloop()
         cpu_exec( 29780 );
         set_ppu_nmi( true );
         printf( "cpu enter int %d\n", 100 - i );
-        cpu_call_interrupt(); // FIXME: check interrupt during execution
 
         ppu_inst->render_bg( vmem );
         SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );

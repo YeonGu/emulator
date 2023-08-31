@@ -34,8 +34,15 @@ int64_t           current_cycles;
 
 extern addr_t RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 //////////////////////////////////////////////////////////////////////
+void cpu_call_interrupt();
+bool get_nmi_sig();
 void cpu_step()
 {
+    if ( get_nmi_sig() )
+    {
+        cpu_call_interrupt();
+        // set_ppu_nmi( false );
+    }
     if ( current_cycles++ < nr_cycles )
         return;
     cpu_exec_once( nullptr );
@@ -76,9 +83,9 @@ void cpu_exec_once( FILE *file )
 #define STACK_PUSH_( data ) vaddr_write( STACKADD( cpu.sp-- ), data )
 void cpu_call_interrupt()
 {
-    //    printf( " CPU entered NMI. CYC=%lld\n", nr_cycles );
-    if ( !is_ppu_nmi_set() )
-        return;
+    // if ( !is_ppu_nmi_set() )
+    //     return;
+    printf( " CPU called NMI. CYC=%lld\n", nr_cycles );
 
     //      #  address R/W description
     // --- ------- --- -----------------------------------------------

@@ -42,8 +42,8 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     memcpy( &pattern_table.pattern_table_1, chr_rom + sizeof( pattern_table.pattern_table_0 ), sizeof( pattern_table.pattern_table_1 ) );
     //  ppu_inst = this;
 
-    //mmap.emplace_back<mem_map_t>( { 0x0000, 0x1000, pattern_table_0 } );
-    //mmap.emplace_back<mem_map_t>( { 0x1000, 0x1000, pattern_table_1 } );
+    // mmap.emplace_back<mem_map_t>( { 0x0000, 0x1000, pattern_table_0 } );
+    // mmap.emplace_back<mem_map_t>( { 0x1000, 0x1000, pattern_table_1 } );
     if ( screen_arrangement == HORIZON_SCREEN )
     {
         mmap.emplace_back<mem_map_t>( { 0x2000, 0x0400, ciram_0 } );
@@ -89,16 +89,16 @@ uint8_t &ppu::map_addr( uint16_t addr )
     addr %= 0x4000;
     if ( addr >= 0x3F00 ) // Pallete index
         return *palette_map[ addr % 0x20 ];
-    else if (addr >= 0x3000)
+    else if ( addr >= 0x3000 )
         addr -= 0x2000;
     if ( addr < 0x2000 ) // Pattern table
-        return reinterpret_cast<uint8_t &>(*(pattern_table.pattern_table_0 + addr));
+        return reinterpret_cast<uint8_t &>( *( pattern_table.pattern_table_0 + addr ) );
 
     // nametable
-    auto it = &mmap[(addr % 0x4000) / 0x1000];
-        //if ( !it->enable_mirror )
-        return *( it->map + ( addr - it->addr ) );
-        //return map_addr( it->mirror_addr + ( addr - it->addr ) );
+    auto it = &mmap[ ( addr % 0x4000 ) / 0x1000 ];
+    // if ( !it->enable_mirror )
+    return *( it->map + ( addr - it->addr ) );
+    // return map_addr( it->mirror_addr + ( addr - it->addr ) );
 }
 uint8_t ppu::mread( addr_t addr ) // 3F00 split search
 {
@@ -146,6 +146,12 @@ void ppu_reg_write( int idx, byte data )
 byte ppu_reg_read( int idx )
 {
     idx %= 8;
+    if ( idx == PPUREG_STATUS ) // read ppustatus: reset nmi_occured
+    {
+        byte data = ppu_inst->get_reg( idx );
+        //        reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg( idx ) ).nmi_flag = 0;
+        return data;
+    }
     if ( idx != PPUREG_DATA )
         return ppu_inst->get_reg( idx );
 
@@ -242,4 +248,13 @@ void set_ppu_nmi_enable( bool v )
 void set_ppu_nmi( bool v )
 {
     reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg( PPUREG_STATUS ) ).nmi_flag = v;
+}
+
+bool get_nmi_sig()
+{
+    static bool nmi_last;
+    bool        nmi_set = is_ppu_nmi_set() && is_ppu_nmi_enable();
+    bool        nmi_sig = !nmi_last && nmi_set;
+    nmi_last            = nmi_set;
+    return nmi_sig;
 }

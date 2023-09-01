@@ -10,7 +10,7 @@
 template<typename addr_t,typename data_t>
 class mmu {
 public:
-    using read_behaviour = std::function<data_t&(addr_t vaddr)>;
+    using read_behaviour = std::function<data_t(addr_t vaddr)>;
     using write_behaviour = std::function<void(addr_t vaddr,data_t data)>;
 
     struct iterator
@@ -40,7 +40,7 @@ private:
     data_t* mem;
 public:
 
-    mmu(data_t* mem,addr_t vaddr_max_size) {
+    mmu(data_t* mem,size_t vaddr_max_size) {
         _mmap = new mmap_t[vaddr_max_size];
         this->mem = mem;
     }
@@ -50,12 +50,12 @@ public:
         return _mmap[vaddr].addr;
     }
 
-    void mmap(addr_t vaddr,addr_t addr,addr_t size)
+    void mmap(addr_t vaddr,addr_t addr,size_t size)
     {
-        for (addr_t offset = 0;offset < size;offset++)
+        for (size_t offset = 0;offset < size;offset++)
         {
             _mmap[vaddr + offset].addr = addr + offset;
-            _mmap[vaddr + offset]._read_b = [&](addr_t _vaddr) -> data_t&{
+            _mmap[vaddr + offset]._read_b = [&](addr_t _vaddr) -> data_t{
                 return reinterpret_cast<data_t&>(mem[this->vaddr_to_addr(_vaddr)]);
             };
             _mmap[vaddr + offset]._write_b = [&](addr_t _vaddr,data_t _data) -> void
@@ -65,11 +65,11 @@ public:
         }
     }
 
-    void mmap(addr_t vaddr,addr_t addr, addr_t size,
+    void mmap(addr_t vaddr,addr_t addr, size_t size,
               read_behaviour read_b,
               write_behaviour write_b)
     {
-        for (addr_t offset = 0;offset < size;offset++)
+        for (size_t offset = 0;offset < size;offset++)
         {
             _mmap[vaddr + offset].addr = addr + offset;
             _mmap[vaddr + offset]._read_b = read_b;
@@ -82,7 +82,7 @@ public:
         _mmap[vaddr]._write_b(vaddr,data);
     }
 
-    data_t& m_read(addr_t vaddr)
+    data_t m_read(addr_t vaddr)
     {
         return _mmap[vaddr]._read_b(vaddr);
     }
@@ -94,7 +94,6 @@ public:
 
 };
 
-template<typename addr_t,typename data_t>
-mmu<addr_t,data_t>* get_mmu();
+mmu<uint16_t ,uint8_t>* get_mmu();
 
 #endif //EMULATOR_MMU_H

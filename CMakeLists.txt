@@ -38,7 +38,9 @@ add_executable(emulator
         #        src/core/ppu/ppu-palette.cpp
         #        src/core/ppu/render.cpp
         src/core/ppu-cxx/ppu.cpp
-        inc/ppu.h)
+        inc/ppu.h
+        inc/mmu.h
+        src/core/mmu.cpp)
 
 if(CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dylib ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)

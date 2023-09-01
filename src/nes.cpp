@@ -78,7 +78,7 @@ void test_loop()
             cpu_step();
         }
 
-        printf( "loop 1 frame \n" );
+        //        printf( "loop 1 frame \n" );
         ppu_inst->render_bg( vmem );
         SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );
         SDL_RenderClear( renderer );

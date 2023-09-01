@@ -67,25 +67,25 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     {
         palette_map[ i ] = bg_palette + i - 1;
     }
-    palette_map[ 0x04 ] = &uni_bg_color;
-    palette_map[ 0x08 ] = &uni_bg_color;
-    palette_map[ 0x0C ] = &uni_bg_color;
+    //    palette_map[ 0x04 ] = &uni_bg_color;
+    //    palette_map[ 0x08 ] = &uni_bg_color;
+    //    palette_map[ 0x0C ] = &uni_bg_color;
     palette_map[ 0x10 ] = &uni_bg_color;
     palette_map[ 0x11 ] = sp_palette[ 0 ];
     palette_map[ 0x12 ] = sp_palette[ 0 ] + 1;
     palette_map[ 0x13 ] = sp_palette[ 0 ] + 2;
-    //    palette_map[ 0x14 ] = palette_map[ 0x04 ];
-    palette_map[ 0x14 ] = &uni_bg_color;
+    palette_map[ 0x14 ] = palette_map[ 0x04 ];
+    //    palette_map[ 0x14 ] = &uni_bg_color;
     palette_map[ 0x15 ] = sp_palette[ 1 ];
     palette_map[ 0x16 ] = sp_palette[ 1 ] + 1;
     palette_map[ 0x17 ] = sp_palette[ 1 ] + 2;
-    //    palette_map[ 0x18 ] = palette_map[ 0x08 ];
-    palette_map[ 0x18 ] = &uni_bg_color;
+    palette_map[ 0x18 ] = palette_map[ 0x08 ];
+    //    palette_map[ 0x18 ] = &uni_bg_color;
     palette_map[ 0x19 ] = sp_palette[ 2 ];
     palette_map[ 0x1A ] = sp_palette[ 2 ] + 1;
     palette_map[ 0x1B ] = sp_palette[ 2 ] + 2;
-    //    palette_map[ 0x1C ] = palette_map[ 0x0C ];
-    palette_map[ 0x1C ] = &uni_bg_color;
+    palette_map[ 0x1C ] = palette_map[ 0x0C ];
+    //    palette_map[ 0x1C ] = &uni_bg_color;
     palette_map[ 0x1D ] = sp_palette[ 3 ];
     palette_map[ 0x1E ] = sp_palette[ 3 ] + 1;
     palette_map[ 0x1F ] = sp_palette[ 3 ] + 2;
@@ -97,13 +97,13 @@ uint8_t &ppu::map_addr( uint16_t addr )
     if ( addr >= 0x3F00 ) // Pallete index
         return *palette_map[ addr % 0x20 ];
     else if ( addr >= 0x3000 ) // Mirrors
-        return reinterpret_cast<uint8_t &>( *( pattern_tables.pattern_table_0 + addr - 0x1000) );
+        return reinterpret_cast<uint8_t &>( *( pattern_tables.pattern_table_0 + addr - 0x1000 ) );
     if ( addr < 0x2000 ) // Pattern table
         return reinterpret_cast<uint8_t &>( *( pattern_tables.pattern_table_0 + addr ) );
 
     // nametable
-    auto it = &mmap[ (addr & 0x0F00) >> 0xA ];
-        return *( it->map + ( addr - it->addr ) );
+    auto it = &mmap[ ( addr & 0x0F00 ) >> 0xA ];
+    return *( it->map + ( addr - it->addr ) );
 }
 uint8_t ppu::mread( addr_t addr ) // 3F00 split search
 {
@@ -121,7 +121,9 @@ void ppu_reg_write( int idx, byte data )
 {
     idx %= 8;
     assert( idx <= 7 );
-    //    printf( "PPU data write reg %x, %02x\n", idx, data );
+
+    //    if ( ( idx == 0 ) )
+    //        printf( "PPU data write reg %x, %02x\n", idx, data );
     switch ( idx )
     {
     case PPUREG_ADDR:
@@ -190,6 +192,7 @@ uint32_t ppu::get_bg_palette_color( uint8_t index )
         printf( "ERROR: GET BG COLOR OUT OF BOUND!\n" );
         //        assert( 0 );
     }
+    index = ( index % 4 == 0 ) ? 0 : index;
     return tines_stdpalette[ *palette_map[ index ] ].data;
 }
 
@@ -218,7 +221,7 @@ uint32_t ppu::get_bg_color( int x, int y )
     pat_addr <<= 4;
     pat_addr |= fine_y; // Pattern Table row. TODO: another pat table for bg
                         //    pat_addr |= ( reinterpret_cast<ppuctrl_flag_t &>( ppuctrl ).bg_pattern_base ) ? 0x8 : 0;
-    pat_addr += 0x1000;
+    pat_addr += ( ppuctrl & 0x10 ) ? 0x1000 : 0;
     // TODO: flip?
     uint8_t pattern_l = mread( pat_addr ) >> ( 7 - fine_x ) & 1;
     uint8_t pattern_h = mread( pat_addr + 8 ) >> ( 7 - fine_x ) & 1;

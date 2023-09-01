@@ -55,7 +55,7 @@ void cpu_exec_once( FILE *file )
     nr_insts_exec++;
     addr_t  pc     = cpu.pc;
     uint8_t opcode = vaddr_read( cpu.pc );
-    if ( opcode == 0x40 ) printf( "CPU Return Int\n" );
+    //    if ( opcode == 0x40 ) printf( "CPU Return Int\n" );
 
 #ifdef CONFIG_DIFFTEST
     char itrace_log[ 64 ];
@@ -85,7 +85,7 @@ void cpu_call_interrupt()
 {
     // if ( !is_ppu_nmi_set() )
     //     return;
-    printf( " CPU called NMI. CYC=%lld\n", nr_cycles );
+    //    printf( " CPU called NMI. CYC=%lld\n", nr_cycles );
 
     //      #  address R/W description
     // --- ------- --- -----------------------------------------------
@@ -583,7 +583,7 @@ void cpu_opcode_register()
     INSTPAT( "LAX", 0xB3, INDIRECT_INDEXED, LAX_( M ), CYC( cross_page ) );
 
     // SAX - Store Accumulator & x
-#define SAX_( addr ) vaddr_write( addr, cpu.accumulator &cpu.x )
+#define SAX_( addr ) vaddr_write( addr, cpu.accumulator & cpu.x )
     INSTPAT( "SAX", 0x87, ZEROPAGE, SAX_( zeropage_addr ) );
     INSTPAT( "SAX", 0x97, ZEROPAGE_Y, SAX_( zeropage_addr ) );
     INSTPAT( "SAX", 0x8F, ABSOLUTE, SAX_( absolute_addr ) );

@@ -96,16 +96,14 @@ uint8_t &ppu::map_addr( uint16_t addr )
     addr %= 0x4000;
     if ( addr >= 0x3F00 ) // Pallete index
         return *palette_map[ addr % 0x20 ];
-    else if ( addr >= 0x3000 )
-        addr -= 0x1000;
+    else if ( addr >= 0x3000 ) // Mirrors
+        return reinterpret_cast<uint8_t &>( *( pattern_tables.pattern_table_0 + addr - 0x1000) );
     if ( addr < 0x2000 ) // Pattern table
         return reinterpret_cast<uint8_t &>( *( pattern_tables.pattern_table_0 + addr ) );
 
     // nametable
-    auto it = &mmap[ ( ( addr % 0x4000 ) - 0x2000 ) / 0x400 ];
-    // if ( !it->enable_mirror )
-    return *( it->map + ( addr - it->addr ) );
-    // return map_addr( it->mirror_addr + ( addr - it->addr ) );
+    auto it = &mmap[ (addr & 0x0F00) >> 0xA ];
+        return *( it->map + ( addr - it->addr ) );
 }
 uint8_t ppu::mread( addr_t addr ) // 3F00 split search
 {

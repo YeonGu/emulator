@@ -40,8 +40,8 @@ private:
     data_t* mem;
 public:
 
-    mmu(data_t* mem,addr_t mem_size) {
-        _mmap = new mmap_t[mem_size];
+    mmu(data_t* mem,addr_t vaddr_max_size) {
+        _mmap = new mmap_t[vaddr_max_size];
         this->mem = mem;
     }
 

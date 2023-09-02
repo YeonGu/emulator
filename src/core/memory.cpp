@@ -10,6 +10,7 @@
 #include "memory.h"
 #include "ppu.h"
 #include "mmu.h"
+#include "input_manager.h"
 #include <cstdio>
 #include <cstdlib>
 
@@ -45,6 +46,8 @@ void init_memory()
     }, [](uint16_t addr,uint8_t data){
         oamdma_write( data );
     });
+    //gamepad
+    vmmu->mmap(0x4016,NULL,1,get_key_shift_reg_lsb,ready_to_get_shift_reg);
 }
 
 uint8_t vaddr_read( addr_t addr )

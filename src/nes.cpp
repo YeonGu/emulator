@@ -7,7 +7,8 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-#include "ppu.h"
+#include <ppu.h>
+#include <input_manager.h>
 #include <SDL2/SDL.h>
 #include <cpu.h>
 #include <cstdio>
@@ -67,7 +68,7 @@ void nes_mainloop()
 void test_loop()
 {
     int test_times = 30;
-    while ( test_times-- )
+    while ( 1 )
     {
         int cyc = 29781;
         while ( cyc-- )
@@ -84,14 +85,7 @@ void test_loop()
         SDL_RenderClear( renderer );
         SDL_RenderCopy( renderer, texture, nullptr, nullptr );
         SDL_RenderPresent( renderer );
-        SDL_Event event;
-        while ( SDL_PollEvent( &event ) )
-        {
-            if ( event.type == SDL_QUIT ) [[unlikely]]
-            {
-                exit( 0 );
-            }
-        }
+        scan_input();
     }
     for ( auto i : ppu_inst->ciram_0 )
     {

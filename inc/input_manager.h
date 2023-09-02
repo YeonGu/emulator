@@ -9,21 +9,22 @@
 #include <SDL2/SDL.h>
 
 enum Gamepad_code{
-    NES_A,
-    NES_B,
-    NES_Select,
-    NES_Start,
-    NES_Up,
-    NES_Down,
-    NES_Left,
-    NES_Right
+    NES_A = 0,
+    NES_B = 1,
+    NES_Select = 2,
+    NES_Start = 3,
+    NES_Up = 4,
+    NES_Down = 5,
+    NES_Left = 6,
+    NES_Right = 7
 };
 
 void init_input_manager();
 
 void keyboard_mapping(SDL_KeyCode keyCode,Gamepad_code gamepadCode);
 
-uint8_t get_key_shift_reg_lsb();
+void ready_to_get_shift_reg(uint16_t addr,uint8_t data);
+uint8_t get_key_shift_reg_lsb(uint16_t addr);
 
 void scan_input();
 

@@ -7,6 +7,7 @@
 
 #include "../inc/rom.h"
 #include "nes.h"
+#include "input_manager.h"
 #include <cpu.h>
 #include <cstdio>
 #include <cstdlib>
@@ -16,6 +17,8 @@ void init_memory();
 int main( int argc, char *argv[] )
 {
     init_memory();
+
+    init_input_manager();
 
     read_rom_mapper( argc, argv ); // Load ROM and INTERRUPT VECTORS ( nes_rom.c -> memory.c ); Init CPU cpu_memory_mapper
                                    // read_rom() -> read_info() -> init_cpu_mapper()

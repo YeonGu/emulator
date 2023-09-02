@@ -148,7 +148,7 @@ void cpu_call_interrupt()
                                                                                                                      \
             CASE( ADDRMODE( RELATIVE ),                                                                              \
                   relative_addr = vaddr_read( cpu.pc + 1 ),                                                          \
-                  cross_page    = ( cpu.pc & 0xFF00 ) != ( ( cpu.pc + 2 + relative_addr ) & 0xFF00 ),                \
+                  cross_page    = ( ( cpu.pc + 2 ) & 0xFF00 ) != ( ( cpu.pc + 2 + relative_addr ) & 0xFF00 ),        \
                   cpu.pc += 2 )                                                                                      \
                                                                                                                      \
             CASE( ADDRMODE( ABSOLUTE ),                                                                              \
@@ -310,28 +310,28 @@ void cpu_opcode_register()
 
     // BCC - Branch if Carry Clear
     INSTPAT( "BCC", 0x90, RELATIVE,
-             cpu.pc += ( CARRY_ ) ? 0 : relative_addr, CYC( ( !CARRY_ ) + ( cross_page & ( !CARRY_ ) ) * 2 ) );
+             cpu.pc += ( CARRY_ ) ? 0 : relative_addr, CYC( ( !CARRY_ ) + ( cross_page & ( !CARRY_ ) ) ) );
     // BCS - Branch if Carry Set
     INSTPAT( "BCS", 0xB0, RELATIVE,
-             cpu.pc += ( CARRY_ ) ? relative_addr : 0, CYC( ( CARRY_ ) + ( cross_page & ( CARRY_ ) ) * 2 ) );
+             cpu.pc += ( CARRY_ ) ? relative_addr : 0, CYC( ( CARRY_ ) + ( cross_page & ( CARRY_ ) ) ) );
     // BEQ - Branch if Equal
     INSTPAT( "BEQ", 0XF0, RELATIVE,
-             cpu.pc += ( ZERO_ ) ? relative_addr : 0, CYC( ( ZERO_ ) + ( cross_page & ( ZERO_ ) ) * 2 ) );
+             cpu.pc += ( ZERO_ ) ? relative_addr : 0, CYC( ( ZERO_ ) + ( cross_page & ( ZERO_ ) ) ) );
     // BMI - Branch if Minus
     INSTPAT( "BMI", 0x30, RELATIVE,
-             cpu.pc += ( NEGATIVE_ ) ? relative_addr : 0, CYC( ( NEGATIVE_ ) + ( cross_page & ( NEGATIVE_ ) ) * 2 ) );
+             cpu.pc += ( NEGATIVE_ ) ? relative_addr : 0, CYC( ( NEGATIVE_ ) + ( cross_page & ( NEGATIVE_ ) ) ) );
     // BNE - Branch if Not Equal
     INSTPAT( "BNE", 0xD0, RELATIVE,
-             cpu.pc += ( !ZERO_ ) ? relative_addr : 0, CYC( ( !ZERO_ ) + ( cross_page & ( !ZERO_ ) ) * 2 ) );
+             cpu.pc += ( !ZERO_ ) ? relative_addr : 0, CYC( ( !ZERO_ ) + ( cross_page & ( !ZERO_ ) ) ) );
     // BPL - Branch if Positive
     INSTPAT( "BPL", 0x10, RELATIVE,
-             cpu.pc += ( !NEGATIVE_ ) ? relative_addr : 0, CYC( ( !NEGATIVE_ ) + ( cross_page & ( !NEGATIVE_ ) ) * 2 ) );
+             cpu.pc += ( !NEGATIVE_ ) ? relative_addr : 0, CYC( ( !NEGATIVE_ ) + ( cross_page & ( !NEGATIVE_ ) ) ) );
     // BVC - Branch if Overflow Clear
     INSTPAT( "BVC", 0x50, RELATIVE,
-             cpu.pc += ( !OVERFLOW_ ) ? ( int16_t ) * (int8_t *) ( &relative_addr ) : 0, CYC( ( !OVERFLOW_ ) + ( cross_page & ( !OVERFLOW_ ) ) * 2 ) );
+             cpu.pc += ( !OVERFLOW_ ) ? ( int16_t ) * (int8_t *) ( &relative_addr ) : 0, CYC( ( !OVERFLOW_ ) + ( cross_page & ( !OVERFLOW_ ) ) ) );
     // BVS - Branch if Overflow Set
     INSTPAT( "BVS", 0x70, RELATIVE,
-             cpu.pc += ( OVERFLOW_ ) ? relative_addr : 0, CYC( ( OVERFLOW_ ) + ( cross_page & ( OVERFLOW_ ) ) * 2 ) );
+             cpu.pc += ( OVERFLOW_ ) ? relative_addr : 0, CYC( ( OVERFLOW_ ) + ( cross_page & ( OVERFLOW_ ) ) ) );
 
     // CLC - Clear Carry Flag
     INSTPAT( "CLC", 0x18, IMPLICIT, CARRY_ = 0 );

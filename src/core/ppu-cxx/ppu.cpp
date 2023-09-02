@@ -89,6 +89,8 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
     palette_map[ 0x1D ] = sp_palette[ 3 ];
     palette_map[ 0x1E ] = sp_palette[ 3 ] + 1;
     palette_map[ 0x1F ] = sp_palette[ 3 ] + 2;
+
+    init_io_register_handlers();
 }
 
 uint8_t &ppu::map_addr( uint16_t addr )
@@ -117,61 +119,63 @@ void ppu::mwrite( addr_t addr, byte data )
 
 void ppu_reg_write( int idx, byte data )
 {
-    idx %= 8;
-    assert( idx <= 7 );
-
-    //    if ( ( idx == 0 ) )
-    //        printf( "PPU data write reg %x, %02x\n", idx, data );
-    switch ( idx )
-    {
-    case PPUREG_ADDR:
-        //        printf( "PPU data write reg 06, %02x\n", data );
-        ppu_inst->get_reg( idx ) = data;
-        static addr_t tmp_addr;
-        if ( ppu_inst->vaddr_wr_h )
-            tmp_addr = tmp_addr & 0x00FF | ( (uint16_t) data << 8 ); // Set higher bits in tmp
-        else
-        {
-            tmp_addr            = tmp_addr & 0xFF00 | data; // Set lower bits in tmp, set the vaddr
-            ppu_inst->vram_addr = tmp_addr;
-        }
-        ppu_inst->vaddr_wr_h = !ppu_inst->vaddr_wr_h;
-        break;
-
-    case PPUREG_DATA: // write to ppudata (0x7)
-                      //        printf( "PPU data write at %04x, %02x\n", ppu_inst->vram_addr, data );
-        //        if ( ppu_inst->vram_addr < 0x2000 ) break;
-        ppu_inst->mwrite( ppu_inst->vram_addr, data );
-        ppu_inst->vram_addr += ( get_vram_inc() ) ? 32 : 1;
-        break;
-    default:
-        ppu_inst->get_reg( idx ) = data;
-        break;
-    }
+    //    idx %= 8;
+    //    assert( idx <= 7 );
+    //
+    //    //    if ( ( idx == 0 ) )
+    //    //        printf( "PPU reg_data write reg %x, %02x\n", idx, reg_data );
+    //    switch ( idx )
+    //    {
+    //    case 6:
+    //        //        printf( "PPU reg_data write reg 06, %02x\n", reg_data );
+    //        ppu_inst->get_reg_data( idx ) = data;
+    //        static addr_t tmp_addr;
+    //        if ( ppu_inst->write_toggle )
+    //            tmp_addr = tmp_addr & 0x00FF | ( (uint16_t) data << 8 ); // Set higher bits in tmp
+    //        else
+    //        {
+    //            tmp_addr            = tmp_addr & 0xFF00 | data; // Set lower bits in tmp, set the vaddr
+    //            ppu_inst->vram_addr = tmp_addr;
+    //        }
+    //        ppu_inst->write_toggle = !ppu_inst->write_toggle;
+    //        break;
+    //
+    //    case 7: // write to ppudata (0x7)
+    //            //        printf( "PPU reg_data write at %04x, %02x\n", ppu_inst->vram_addr, reg_data );
+    //        //        if ( ppu_inst->vram_addr < 0x2000 ) break;
+    //        ppu_inst->mwrite( ppu_inst->vram_addr, data );
+    //        ppu_inst->vram_addr += ( get_vram_inc() ) ? 32 : 1;
+    //        break;
+    //    default:
+    //        ppu_inst->get_reg_data( idx ) = data;
+    //        break;
+    //    }
+    ppu_inst->ppu_io_reg[ idx % 8 ].write_handler( data );
 }
 
 byte ppu_reg_read( int idx )
 {
-    idx %= 8;
-    if ( idx == PPUREG_STATUS ) // read ppustatus: reset nmi_occured
-    {
-        byte data = ppu_inst->get_reg( idx );
-        //        reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg( idx ) ).nmi_flag = 0;
-        return data;
-    }
-    if ( idx != PPUREG_DATA )
-        return ppu_inst->get_reg( idx );
-
-    static byte readdata_buf;
-    // Read PPUDATA
-    byte data = ppu_inst->mread( ppu_inst->vram_addr );
-    //    ppu_inst->vram_addr += ( get_vram_inc() ) ? 32 : 1;
-
-    if ( ppu_inst->vram_addr < 0x3F00 )
-    {
-        std::swap( data, readdata_buf );
-    }
-    return data;
+    //    idx %= 8;
+    //    if ( idx == PPUREG_STATUS ) // read ppustatus: reset nmi_occured
+    //    {
+    //        byte data = ppu_inst->get_reg_data( idx );
+    //        //        reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg_data( idx ) ).nmi_flag = 0;
+    //        return data;
+    //    }
+    //    if ( idx != PPUREG_DATA )
+    //        return ppu_inst->get_reg_data( idx );
+    //
+    //    static byte readdata_buf;
+    //    // Read PPUDATA
+    //    byte data = ppu_inst->mread( ppu_inst->vram_addr );
+    //    //    ppu_inst->vram_addr += ( get_vram_inc() ) ? 32 : 1;
+    //
+    //    if ( ppu_inst->vram_addr < 0x3F00 )
+    //    {
+    //        std::swap( data, readdata_buf );
+    //    }
+    //    return data;
+    return ppu_inst->ppu_io_reg[ idx % 8 ].read_handler();
 }
 void oamdma_write( byte data )
 {
@@ -219,7 +223,7 @@ uint32_t ppu::get_bg_color( int x, int y )
     pat_addr <<= 4;
     pat_addr |= fine_y; // Pattern Table row. TODO: another pat table for bg
                         //    pat_addr |= ( reinterpret_cast<ppuctrl_flag_t &>( ppuctrl ).bg_pattern_base ) ? 0x8 : 0;
-    pat_addr += ( ppuctrl & 0x10 ) ? 0x1000 : 0;
+    pat_addr += ( get_reg_data( PPUREG_CTRL ) & 0x10 ) ? 0x1000 : 0;
     // TODO: flip?
     uint8_t pattern_l = mread( pat_addr ) >> ( 7 - fine_x ) & 1;
     uint8_t pattern_h = mread( pat_addr + 8 ) >> ( 7 - fine_x ) & 1;
@@ -253,11 +257,11 @@ void ppu::step( uint32_t *vmem )
     }
     else if ( scanline == 241 && line_cycle == 1 )
     {
-        reinterpret_cast<ppustatus_flag_t &>( get_reg( PPUREG_STATUS ) ).nmi_flag = 1;
+        reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 1;
     }
     else if ( scanline == 260 && line_cycle == 340 )
     {
-        reinterpret_cast<ppustatus_flag_t &>( get_reg( PPUREG_STATUS ) ).nmi_flag = 0;
+        reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 0;
     }
 
     // status update
@@ -270,24 +274,24 @@ void ppu::step( uint32_t *vmem )
 
 bool is_ppu_nmi_enable()
 {
-    return reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg( PPUREG_CTRL ) ).nmi_enable;
+    return reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg_data( PPUREG_CTRL ) ).nmi_enable;
 }
 bool is_ppu_nmi_set()
 {
-    return reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg( PPUREG_STATUS ) ).nmi_flag;
+    return reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg_data( PPUREG_STATUS ) ).nmi_flag;
 }
 byte get_vram_inc()
 {
-    return reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg( PPUREG_CTRL ) ).vram_inc;
+    return reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg_data( PPUREG_CTRL ) ).vram_inc;
 }
 
 void set_ppu_nmi_enable( bool v )
 {
-    reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg( PPUREG_CTRL ) ).nmi_enable = v;
+    reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg_data( PPUREG_CTRL ) ).nmi_enable = v;
 }
 void set_ppu_nmi( bool v )
 {
-    reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg( PPUREG_STATUS ) ).nmi_flag = v;
+    reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg_data( PPUREG_STATUS ) ).nmi_flag = v;
 }
 
 bool get_nmi_sig()

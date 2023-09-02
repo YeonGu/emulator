@@ -6,8 +6,8 @@
 #define EMULATOR_PPU_H
 #include <cassert>
 #include <cstdint>
+#include <functional>
 #include <vector>
-
 using addr_t = uint16_t;
 using byte   = uint8_t;
 struct mem_map_t
@@ -24,6 +24,17 @@ class ppu
     void mwrite( addr_t addr, byte data );
 
   private:
+    enum ppu_reg_list
+    {
+        PPUREG_CTRL,
+        PPUREG_MASK,
+        PPUREG_STATUS,
+        PPUREG_OAMADDR,
+        PPUREG_OAMDATA,
+        PPUREG_SCROLL,
+        PPUREG_ADDR, // 6
+        PPUREG_DATA, // 7
+    };
     int scr_arrange;
     ////////////////////////////////////////////////////////////////////////////////////////
     /// PPU status. see: PPU rendering
@@ -36,9 +47,26 @@ class ppu
     addr_t vram_addr    = 0;
     addr_t tmp_addr     = 0;
     byte   finex_scroll = 0;
-    bool   vaddr_wr_h   = true;
+    bool   write_toggle = false;
+    ////////////////////////////////////////////////////////////////////////////////////////
+    // PPU Register Set. https://www.nesdev.org/wiki/PPU_registers
+    using reg_read_behavior  = std::function<byte()>;
+    using reg_write_behavior = std::function<void( byte )>;
+    void init_io_register_handlers();
+    struct ppu_io_register_t
+    {
+        byte              reg_data;
+        reg_read_behavior read_handler = [ this ]() {
+            return reg_data;
+        };
+        reg_write_behavior write_handler = [ this ]( byte data ) {
+            reg_data = data;
+        };
+    } ppu_io_reg[ 8 ];
+
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Memory. https://www.nesdev.org/wiki/PPU_memory_map
+    // TODO: refactor this shit
     std::vector<mem_map_t> mmap;
     byte                  *palette_map[ 0x20 ] = {};
     struct
@@ -53,18 +81,6 @@ class ppu
     byte bg_palette[ 15 ]     = {}; // $3F00 - $3F1F
     byte sp_palette[ 4 ][ 3 ] = {}; // $3F00 - $3F1F
 
-    ////////////////////////////////////////////////////////////////////////////////////////
-    // PPU Register Set. https://www.nesdev.org/wiki/PPU_registers
-    byte ppuctrl   = 0; // $2000
-    byte ppumask   = 0; // $2001
-    byte ppustatus = 0; // $2002
-    byte oamaddr   = 0; // $2003
-    byte oamdata   = 0; // $2004
-    byte ppuscroll = 0; // $2005
-    byte ppuaddr   = 0; // $2006
-    byte ppudata   = 0; // $2007
-    byte oamdma    = 0; // $4014
-
     byte &map_addr( addr_t addr );
 
     uint32_t get_bg_palette_color( uint8_t index );
@@ -78,22 +94,32 @@ class ppu
     // PPU Memory
     void step( uint32_t *vmem );
 
-    byte &get_reg( int idx )
-    {
-        assert( idx >= 0 && idx <= 7 );
-        return *( &ppuctrl + idx );
-    }
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Render
     void render_bg( uint32_t *vmem );
 
+    byte &get_reg_data( int idx )
+    {
+        assert( idx >= 0 && idx <= 7 );
+        return ppu_io_reg[ idx ].reg_data;
+    }
     friend void ppu_reg_write( int idx, byte data );
     friend byte ppu_reg_read( int idx );
     friend void test_loop();
 };
 
 extern ppu *ppu_inst;
-
+enum ppu_reg_list
+{
+    PPUREG_CTRL,
+    PPUREG_MASK,
+    PPUREG_STATUS,
+    PPUREG_OAMADDR,
+    PPUREG_OAMDATA,
+    PPUREG_SCROLL,
+    PPUREG_ADDR, // 6
+    PPUREG_DATA, // 7
+};
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
 //  C like interfaces
@@ -107,18 +133,7 @@ enum
     HORIZON_SCREEN,
     VERTICAL_SCREEN,
 };
-enum ppu_reg_list
-{
-    PPUREG_CTRL,
-    PPUREG_MASK,
-    PPUREG_STATUS,
-    PPUREG_OAMADDR,
-    PPUREG_OAMDATA,
-    PPUREG_SCROLL,
 
-    PPUREG_ADDR, // 6
-    PPUREG_DATA, // 7
-};
 //////////////////////////////////////////////////////////////////////////////////
 // PPU Register reinterpret
 struct ppuctrl_flag_t

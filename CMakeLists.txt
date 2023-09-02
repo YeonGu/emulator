@@ -3,7 +3,7 @@ project(emulator)
 
 set(CMAKE_C_STANDARD 11)
 
-if(CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
+if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
     set(SDL2_LIB_DIR /opt/homebrew/opt/sdl2)
 elseif (CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
     set(SDL2_LIB_DIR D:/Library/clibs/SDL2-2.28.2/x86_64-w64-mingw32)
@@ -42,9 +42,10 @@ add_executable(emulator
         inc/mmu.h
         src/core/mmu.cpp
         inc/input_manager.h
-        src/core/input_manager.cpp)
+        src/core/input_manager.cpp
+        src/core/ppu-cxx/ppu-reg-handlers.cpp)
 
-if(CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
+if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dylib ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)
 elseif (CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dll.a ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)

@@ -56,7 +56,6 @@ void test_loop()
             cpu_step();
         }
 
-        ppu_inst->render_bg( vmem );
         SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );
         SDL_RenderClear( renderer );
         SDL_RenderCopy( renderer, texture, nullptr, nullptr );
@@ -89,8 +88,8 @@ int sdl_test()
         "NES EMULATOR",          // 窗口标题
         SDL_WINDOWPOS_UNDEFINED, // 窗口的初始位置
         SDL_WINDOWPOS_UNDEFINED,
-        256,             // 窗口的宽度
-        240,             // 窗口的高度
+        512,             // 窗口的宽度
+        480,             // 窗口的高度
         SDL_WINDOW_SHOWN // 窗口的显示标志
     );
 

@@ -23,14 +23,14 @@ void ready_to_get_shift_reg( uint16_t addr, uint8_t data )
     assert( addr == 0x4016 );
     reg_bit            = 0;
     key_shift_reg_copy = key_shift_reg;
-    printf( "will read key\n" );
+    //    printf( "will read key\n" );
 }
 
 uint8_t get_key_shift_reg_lsb( uint16_t addr )
 {
     assert( addr == 0x4016 );
     if ( reg_bit >= 8 ) reg_bit = 0;
-    printf( "read key bit %d is %d\n", reg_bit, ( key_shift_reg_copy >> reg_bit ) & 1 );
+    //    printf( "read key bit %d is %d\n", reg_bit, ( key_shift_reg_copy >> reg_bit ) & 1 );
     return ( ( key_shift_reg_copy >> reg_bit++ ) & 1 );
 }
 
@@ -49,7 +49,7 @@ void scan_input()
             if ( event.key.keysym.sym >= 256 || keyboard_to_gamepadCode[ event.key.keysym.sym ] < 0 ) return;
             key_shift_reg &= ~( 1 << keyboard_to_gamepadCode[ event.key.keysym.sym ] );
             key_shift_reg |= ( event.type == SDL_KEYDOWN ? 1 : 0 ) << keyboard_to_gamepadCode[ event.key.keysym.sym ];
-            printf( "set key %d as %d\n", keyboard_to_gamepadCode[ event.key.keysym.sym ], ( event.type == SDL_KEYDOWN ? 1 : 0 ) );
+            //            printf( "set key %d as %d\n", keyboard_to_gamepadCode[ event.key.keysym.sym ], ( event.type == SDL_KEYDOWN ? 1 : 0 ) );
         }
     }
 }

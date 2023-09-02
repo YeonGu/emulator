@@ -36,7 +36,6 @@ private:
         read_behaviour _read_b;
         write_behaviour _write_b;
     }*_mmap;
-    iterator* iterator_val;
     data_t* mem;
 public:
 
@@ -56,7 +55,7 @@ public:
         {
             _mmap[vaddr + offset].addr = addr + offset;
             _mmap[vaddr + offset]._read_b = [&](addr_t _vaddr) -> data_t{
-                return reinterpret_cast<data_t&>(mem[this->vaddr_to_addr(_vaddr)]);
+                return mem[this->vaddr_to_addr(_vaddr)];
             };
             _mmap[vaddr + offset]._write_b = [&](addr_t _vaddr,data_t _data) -> void
             {

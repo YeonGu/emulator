@@ -11,8 +11,12 @@
 #include <cstdio>
 #include <cstdlib>
 
+void init_memory();
+
 int main( int argc, char *argv[] )
 {
+    init_memory();
+
     read_rom_mapper( argc, argv ); // Load ROM and INTERRUPT VECTORS ( nes_rom.c -> memory.c ); Init CPU cpu_memory_mapper
                                    // read_rom() -> read_info() -> init_cpu_mapper()
 

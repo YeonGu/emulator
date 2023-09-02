@@ -19,7 +19,7 @@ struct cpu_mem_map_t *find_cpu_map( addr_t addr );
 void init_memory()
 {
     auto vmmu = get_mmu();
-    vmmu->mmap(0x0,NULL,0x10000,[](uint16_t addr){
+    vmmu->mmap(0x0, nullptr,0x10000,[](uint16_t addr){
         struct cpu_mem_map_t *map = find_cpu_map( addr );
         assert( map );
         addr_t offset = addr - map->nes_begin;
@@ -35,19 +35,19 @@ void init_memory()
         if ( map->mem_write_handler ) map->mem_write_handler( offset, data );
     });
     //PPU MEM
-    vmmu->mmap(0x2000,NULL,0x3FFF - 0x2000 + 1,[](uint16_t addr) -> uint16_t{
+    vmmu->mmap(0x2000, nullptr,0x3FFF - 0x2000 + 1,[](uint16_t addr) -> uint16_t{
         return ppu_reg_read( addr % 8 );
     }, [](uint16_t addr,uint8_t data){
         ppu_reg_write( addr % 8, data );
     });
     //OAM DMA
-    vmmu->mmap(0x4014,NULL,1,[](uint16_t addr) -> uint16_t{
+    vmmu->mmap(0x4014, nullptr,1,[](uint16_t addr) -> uint16_t{
         return oamdma_read();
     }, [](uint16_t addr,uint8_t data){
         oamdma_write( data );
     });
     //gamepad
-    vmmu->mmap(0x4016,NULL,1,get_key_shift_reg_lsb,ready_to_get_shift_reg);
+    vmmu->mmap(0x4016, nullptr,1,get_key_shift_reg_lsb,ready_to_get_shift_reg);
 }
 
 uint8_t vaddr_read( addr_t addr )

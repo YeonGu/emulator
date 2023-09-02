@@ -9,6 +9,6 @@ mmu<uint16_t, uint8_t> *vmmu = nullptr;
 mmu<uint16_t, uint8_t> *get_mmu()
 {
     if ( vmmu == nullptr )
-        vmmu = new mmu<uint16_t, uint8_t>( new uint8_t[ 0x10000 ], sizeof( uint8_t[ 0x10000 ] ) );
+        vmmu = new mmu<uint16_t, uint8_t>(sizeof( uint8_t[ 0x10000 ] ) );
     return vmmu;
 }

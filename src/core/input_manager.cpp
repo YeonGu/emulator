@@ -45,7 +45,7 @@ void scan_input()
 
         if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
         {
-            if(keyboard_to_gamepadCode[event.key.keysym.sym] < 0)return;
+            if(event.key.keysym.sym >= 256 || keyboard_to_gamepadCode[event.key.keysym.sym] < 0)return;
             key_shift_reg &= ~(1 << keyboard_to_gamepadCode[event.key.keysym.sym]);
             key_shift_reg |= (event.type == SDL_KEYDOWN ? 1 : 0) << keyboard_to_gamepadCode[event.key.keysym.sym];
             printf("set key %d as %d\n",keyboard_to_gamepadCode[event.key.keysym.sym],(event.type == SDL_KEYDOWN ? 1 : 0));

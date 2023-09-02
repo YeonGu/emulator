@@ -7,11 +7,11 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-#include <ppu.h>
-#include <input_manager.h>
 #include <SDL2/SDL.h>
 #include <cpu.h>
 #include <cstdio>
+#include <input_manager.h>
+#include <ppu.h>
 // #include <ppu-reg.h>
 
 void cpu_call_interrupt();
@@ -37,30 +37,7 @@ void nes_mainloop()
 
     set_ppu_nmi_enable( true );
     test_loop();
-    //    test_loop
-    //    int i = 2;
-    //    while ( 1 )
-    //    {
-    //
-    //        cpu_exec( 29780 );
-    //        set_ppu_nmi( true );
-    //        printf( "cpu enter int %d\n", 100 - i );
-    //
-    //        ppu_inst->render_bg( vmem );
-    //        SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );
-    //        SDL_RenderClear( renderer );
-    //        SDL_RenderCopy( renderer, texture, nullptr, nullptr );
-    //        SDL_RenderPresent( renderer );
-    //
-    //        SDL_Event event;
-    //        while ( SDL_PollEvent( &event ) )
-    //        {
-    //            if ( event.type == SDL_QUIT ) [[unlikely]]
-    //            {
-    //                exit( 0 );
-    //            }
-    //        }
-    //    }
+
     system( "pause" );
     printf( "Exit NES mainloop.\n" );
 }
@@ -79,7 +56,6 @@ void test_loop()
             cpu_step();
         }
 
-        //        printf( "loop 1 frame \n" );
         ppu_inst->render_bg( vmem );
         SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );
         SDL_RenderClear( renderer );
@@ -87,6 +63,8 @@ void test_loop()
         SDL_RenderPresent( renderer );
         scan_input();
     }
+
+    // Only for test: print the ciram content
     for ( auto i : ppu_inst->ciram_0 )
     {
         static int addr = 0x2000;

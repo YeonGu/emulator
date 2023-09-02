@@ -1,5 +1,5 @@
 //
-// Created by 顾雨杭 on 2023/8/30.
+// Created by Yuhang Gu on 2023/8/30.
 //
 
 #include "ppu.h"
@@ -112,8 +112,6 @@ uint8_t ppu::mread( addr_t addr ) // 3F00 split search
 
 void ppu::mwrite( addr_t addr, byte data )
 {
-    if ( addr >= 0x3F00 )
-        printf( "write to palette %04x %02x\n", addr, data );
     map_addr( addr ) = data;
 }
 

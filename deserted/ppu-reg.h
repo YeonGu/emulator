@@ -1,5 +1,5 @@
 //
-// Created by 顾雨杭 on 2023/8/27.
+// Created by Yuhang Gu on 2023/8/27.
 //
 
 #ifndef EMULATOR_PPU_REG_H

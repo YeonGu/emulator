@@ -4,10 +4,10 @@
 //  Created by Gu Yuhang on 2023/8/21
 //
 ///////////////////////////////////////////////////////////////////////
-
+#define SDL_MAIN_HANDLED
 #include "../inc/rom.h"
-#include "nes.h"
 #include "input_manager.h"
+#include "nes.h"
 #include <cpu.h>
 #include <cstdio>
 #include <cstdlib>
@@ -24,7 +24,6 @@ int main( int argc, char *argv[] )
                                    // read_rom() -> read_info() -> init_cpu_mapper()
 
     init_cpu(); // Init CPU (RESET vector). CPU Power up state...
-                //    init_ppu(); // Init PPU. PPU Power up state...
 
     nes_mainloop();
 

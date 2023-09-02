@@ -49,9 +49,11 @@ int  read_rom_mapper( int argc, char **argv )
     // TODO: get the rom file path...
 
     //    rom_file = "../rom-fix/palette.nes";
-    //    rom_file = "../rom-fix/nestest.nes";
+    rom_file = "../rom-fix/nestest.nes";
     //    rom_file = "../rom-fix/power_up_palette.nes";
-    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\mario.nes";
+    //    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\kungfu.nes";
+    //    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\mario.nes";
+    //    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\circus.nes";
 
     if ( argc == 1 )
         printf( "No file target is given. Use the default mario file.\n" );

@@ -1,5 +1,5 @@
 //
-// Created by 顾雨杭 on 2023/8/30.
+// Created by Yuhang Gu on 2023/8/30.
 //
 
 #ifndef EMULATOR_PPU_H
@@ -8,8 +8,6 @@
 #include <cstdint>
 #include <vector>
 
-// #define addr_t uint16_t
-// #define byte uint8_t
 using addr_t = uint16_t;
 using byte   = uint8_t;
 struct mem_map_t
@@ -17,15 +15,16 @@ struct mem_map_t
     addr_t addr;
     addr_t size;
     byte  *map;
-    //  bool   enable_mirror;
-    //  addr_t mirror_addr;
 };
 
 class ppu
 {
+  public:
+    byte mread( addr_t addr );
+    void mwrite( addr_t addr, byte data );
+
   private:
     int scr_arrange;
-
     ////////////////////////////////////////////////////////////////////////////////////////
     /// PPU status. see: PPU rendering
     int      scanline   = -1;
@@ -79,8 +78,6 @@ class ppu
     // PPU Memory
     void step( uint32_t *vmem );
 
-    byte  mread( addr_t addr );
-    void  mwrite( addr_t addr, byte data );
     byte &get_reg( int idx )
     {
         assert( idx >= 0 && idx <= 7 );

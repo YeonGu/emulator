@@ -1,5 +1,5 @@
 //
-// Created by 顾雨杭 on 2023/8/24.
+// Created by Yuhang Gu on 2023/8/24.
 //
 
 #ifndef EMULATOR_CONFIGS_H

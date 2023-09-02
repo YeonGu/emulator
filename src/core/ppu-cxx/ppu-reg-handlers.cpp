@@ -75,7 +75,10 @@ void ppu::init_io_register_handlers()
         vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
     };
     ppu_io_reg[ PPUREG_DATA ].read_handler = [ this ]() {
-        //        printf( "read from reg 7, vram = %4x\n", vram_addr );
-        return mread( vram_addr );
+        printf( "read from reg 7, vram = %4x\n", vram_addr );
+        static byte data_latch;
+        auto        item = mread( vram_addr );
+        std::swap( data_latch, item );
+        return item;
     };
 }

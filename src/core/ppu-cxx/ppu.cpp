@@ -126,28 +126,9 @@ void        ppu_reg_write( int idx, byte data )
 
 byte ppu_reg_read( int idx )
 {
-    //    idx %= 8;
-    //    if ( idx == PPUREG_STATUS ) // read ppustatus: reset nmi_occured
-    //    {
-    //        byte data = ppu_inst->get_reg_data( idx );
-    //        //        reinterpret_cast<ppustatus_flag_t &>( ppu_inst->get_reg_data( idx ) ).nmi_flag = 0;
-    //        return data;
-    //    }
-    //    if ( idx != PPUREG_DATA )
-    //        return ppu_inst->get_reg_data( idx );
-    //
-    //    static byte readdata_buf;
-    //    // Read PPUDATA
-    //    byte data = ppu_inst->mread( ppu_inst->vram_addr );
-    //    //    ppu_inst->vram_addr += ( get_vram_inc() ) ? 32 : 1;
-    //
-    //    if ( ppu_inst->vram_addr < 0x3F00 )
-    //    {
-    //        std::swap( data, readdata_buf );
-    //    }
-    //    return data;
     return ppu_inst->ppu_io_reg[ idx % 8 ].read_handler();
 }
+
 void oamdma_write( byte data )
 {
 }
@@ -230,8 +211,8 @@ void ppu::step( uint32_t *vmem )
     {
         reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 1;
     }
-    else if ( scanline == 260 && line_cycle == 340 )
-    {
+    else if ( scanline == 260 && line_cycle == 332 ) // The VBL flag ($2002.7) is cleared by the PPU around 2270 CPU clocks
+    {                                                //        after NMI occurs. (vbl clear time test)
         reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 0;
     }
 

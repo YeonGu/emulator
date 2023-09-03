@@ -83,7 +83,7 @@ void ppu::init_io_register_handlers()
             tmp_addr |= data;
             vram_addr = tmp_addr;
 
-            printf( "write vram addr = %04x\n", vram_addr );
+            //            printf( "write vram addr = %04x\n", vram_addr );
         }
     };
     ppu_io_reg[ PPUREG_ADDR ].read_handler = [ this ]() -> byte {
@@ -92,12 +92,12 @@ void ppu::init_io_register_handlers()
 
     // $2007
     ppu_io_reg[ PPUREG_DATA ].write_handler = [ this ]( byte data ) {
-        if ( vram_addr < 0x2060 ) printf( "write %02x to reg 7, vram = %4x\n", data, vram_addr );
+        //        if ( vram_addr < 0x2060 ) printf( "write %02x to reg 7, vram = %4x\n", data, vram_addr );
         mwrite( vram_addr, data );
         vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
     };
     ppu_io_reg[ PPUREG_DATA ].read_handler = [ this ]() {
-        printf( "read from reg 7, vram = %4x\n", vram_addr );
+        //        printf( "read from reg 7, vram = %4x\n", vram_addr );
         static byte data_latch;
         auto        item = mread( vram_addr );
         std::swap( data_latch, item );

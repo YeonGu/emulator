@@ -251,7 +251,7 @@ void cpu_opcode_register()
         assert( 0 );
     } );
     // TODO: BRK Interrupt
-    INSTPAT( "BRK", 0x00, IMPLICIT );
+    INSTPAT( "BRK", 0x00, IMPLICIT, CYC( 1 ) );
 
 // ADC - Add with Carry
 #define ADC_( A_, M_, C_ ) ans = cpu.accumulator + ( M_ + CARRY_ ), SET_OVERFLOW_( A_, M_ ), CARRY_ = CARRY_ADD3_8_( A_, M_, C_ ), SET_ZERO_( ans ), SET_NEGATIVE_( ans ), A_ = ans
@@ -498,12 +498,12 @@ void cpu_opcode_register()
     // RTI - Return from Interrupt
     INSTPAT( "RTI", 0x40, IMPLICIT, cpu.status.ps = STACK_POP_,
              cpu.pc = STACK_POP_, cpu.pc |= ( STACK_POP_ << 8 ),
-             cpu.status.ps &= 0xEF, cpu.status.ps |= 0x20 ); // Set flagb to 2'b01
+             cpu.status.ps &= 0xEF, cpu.status.ps |= 0x20, CYC( 1 ) ); // Set flagb to 2'b01
 
     // RTS - Return from Subroutine
     INSTPAT( "RTS", 0x60, IMPLICIT,
              cpu.pc = 1 + vaddr_read( STACKADD( cpu.sp + 1 ) ) + ( (addr_t) vaddr_read( STACKADD( cpu.sp + 2 ) ) << 8 ),
-             cpu.sp += 2 );
+             cpu.sp += 2, CYC( 1 ) );
 
 // SBC - Subtract with Carry
 #define SBC_( A, M_ ) ans       = A - M_ - ( 1 - CARRY_ ),                         \
@@ -583,7 +583,7 @@ void cpu_opcode_register()
     INSTPAT( "LAX", 0xB3, INDIRECT_INDEXED, LAX_( M ), CYC( cross_page ) );
 
     // SAX - Store Accumulator & x
-#define SAX_( addr ) vaddr_write( addr, cpu.accumulator & cpu.x )
+#define SAX_( addr ) vaddr_write( addr, cpu.accumulator &cpu.x )
     INSTPAT( "SAX", 0x87, ZEROPAGE, SAX_( zeropage_addr ) );
     INSTPAT( "SAX", 0x97, ZEROPAGE_Y, SAX_( zeropage_addr ) );
     INSTPAT( "SAX", 0x8F, ABSOLUTE, SAX_( absolute_addr ) );

@@ -11,14 +11,23 @@
 #include <ppu.h>
 using reg_read_behavior  = std::function<byte()>;
 using reg_write_behavior = std::function<void( byte )>;
+byte ppu_iobus_value; // https://www.nesdev.org/wiki/Open_bus_behavior
 
 void ppu::init_io_register_handlers()
 {
-    // $2000
-    ppu_io_reg[ PPUREG_CTRL ].write_handler = [ this ]( byte data ) {
+    // $2000 CTRL > write
+    ppu_io_reg[ PPUREG_CTRL ].write_handler = [ this ]( byte data ) -> void {
         tmp_addr &= 0x3FF;
         tmp_addr |= data & 0x3 << 10;
         ppu_io_reg[ PPUREG_CTRL ].reg_data = data;
+    };
+    ppu_io_reg[ PPUREG_CTRL ].read_handler = [ this ]() -> byte {
+        return ppu_iobus_value;
+    };
+
+    // $2001 MASK > write
+    ppu_io_reg[ PPUREG_MASK ].read_handler = [ this ]() -> byte {
+        return ppu_iobus_value;
     };
 
     // $2002
@@ -27,7 +36,14 @@ void ppu::init_io_register_handlers()
         ppu_io_reg[ PPUREG_STATUS ].reg_data = data;
     };
 
-    // $2005
+    // $2003
+    ppu_io_reg[ PPUREG_OAMADDR ].write_handler = [ this ]( byte data ) {
+        ppu_io_reg[ PPUREG_OAMADDR ].reg_data = data;
+    };
+    ppu_io_reg[ PPUREG_OAMADDR ].read_handler = [ this ]() -> byte {
+        return ppu_iobus_value;
+    };
+    // $2005 SCROLL >> write x2
     ppu_io_reg[ PPUREG_SCROLL ].write_handler = [ this ]( byte data ) {
         if ( !write_toggle )
         { // $2005 first write
@@ -46,8 +62,11 @@ void ppu::init_io_register_handlers()
             tmp_addr |= data >> 3 << 5;
         }
     };
+    ppu_io_reg[ PPUREG_SCROLL ].read_handler = [ this ]() -> byte {
+        return ppu_iobus_value;
+    };
 
-    // $2006
+    // $2006 ADDRESS >> write x2
     ppu_io_reg[ PPUREG_ADDR ].write_handler = [ this ]( byte data ) {
         if ( !write_toggle )
         {
@@ -66,6 +85,9 @@ void ppu::init_io_register_handlers()
 
             printf( "write vram addr = %04x\n", vram_addr );
         }
+    };
+    ppu_io_reg[ PPUREG_ADDR ].read_handler = [ this ]() -> byte {
+        return ppu_iobus_value;
     };
 
     // $2007

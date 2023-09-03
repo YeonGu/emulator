@@ -11,7 +11,8 @@
 #include <ppu.h>
 using reg_read_behavior  = std::function<byte()>;
 using reg_write_behavior = std::function<void( byte )>;
-byte ppu_iobus_value; // https://www.nesdev.org/wiki/Open_bus_behavior
+byte        ppu_iobus_value; // https://www.nesdev.org/wiki/Open_bus_behavior
+static bool ppu_2007_first_read = true;
 
 void ppu::init_io_register_handlers()
 {
@@ -34,6 +35,10 @@ void ppu::init_io_register_handlers()
     ppu_io_reg[ PPUREG_STATUS ].write_handler = [ this ]( byte data ) {
         write_toggle                         = false;
         ppu_io_reg[ PPUREG_STATUS ].reg_data = data;
+    };
+    ppu_io_reg[ PPUREG_STATUS ].read_handler = [ this ]() -> byte {
+        ppu_2007_first_read = true;
+        return ppu_io_reg[ PPUREG_STATUS ].reg_data;
     };
 
     // $2003
@@ -68,6 +73,7 @@ void ppu::init_io_register_handlers()
 
     // $2006 ADDRESS >> write x2
     ppu_io_reg[ PPUREG_ADDR ].write_handler = [ this ]( byte data ) {
+        ppu_2007_first_read = true;
         if ( !write_toggle )
         {
             write_toggle                       = true;
@@ -82,8 +88,6 @@ void ppu::init_io_register_handlers()
             tmp_addr &= 0xFF00;
             tmp_addr |= data;
             vram_addr = tmp_addr;
-
-            //            printf( "write vram addr = %04x\n", vram_addr );
         }
     };
     ppu_io_reg[ PPUREG_ADDR ].read_handler = [ this ]() -> byte {
@@ -92,14 +96,23 @@ void ppu::init_io_register_handlers()
 
     // $2007
     ppu_io_reg[ PPUREG_DATA ].write_handler = [ this ]( byte data ) {
-        //        if ( vram_addr < 0x2060 ) printf( "write %02x to reg 7, vram = %4x\n", data, vram_addr );
         mwrite( vram_addr, data );
-        vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
     };
     ppu_io_reg[ PPUREG_DATA ].read_handler = [ this ]() {
-        //        printf( "read from reg 7, vram = %4x\n", vram_addr );
         static byte data_latch;
-        auto        item = mread( vram_addr );
+
+        if ( ppu_2007_first_read )
+            ppu_2007_first_read = false;
+        else
+            vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
+        auto addr = vram_addr % 0x4000;
+
+        if ( addr >= 0x3F00 ) // in palette_ram.nes test, reported:
+        {                     // 2) Palette read shouldn't be buffered like other VRAM
+            data_latch = mread( addr );
+            return data_latch;
+        }
+        auto item = mread( addr );
         std::swap( data_latch, item );
         return item;
     };

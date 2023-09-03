@@ -52,9 +52,11 @@ int  read_rom_mapper( int argc, char **argv )
     //    rom_file = "../rom-fix/cpu_dummy_reads.nes";
     //    rom_file = "../rom-fix/2.Backward_Branch.nes";
     //    rom_file = "../rom-fix/test_cpu_exec_space_ppuio.nes";
-    rom_file = "../rom-fix/test_cpu_flag_concurrency.nes";
+    //    rom_file = "../rom-test/ppu/palette_ram.nes";
+    //    rom_file = "../rom-test/ppu/power_up_palette.nes";
+    //    rom_file = "../rom-fix/test_cpu_flag_concurrency.nes"; // pass
     //    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\kungfu.nes";
-    //    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\mario.nes";
+    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\mario.nes";
     //    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\circus.nes";
 
     if ( argc == 1 )

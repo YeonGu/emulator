@@ -251,7 +251,9 @@ void cpu_opcode_register()
         assert( 0 );
     } );
     // TODO: BRK Interrupt
-    INSTPAT( "BRK", 0x00, IMPLICIT, CYC( 1 ) );
+    INSTPAT( "BRK", 0x00, IMPLICIT,
+             STACK_PUSH_( cpu.pc >> 8 ), STACK_PUSH_( cpu.pc ), STACK_PUSH_( cpu.status.ps ),
+             cpu.status.ps |= 0x34, cpu.pc = IRQ_BRK_VECTOR, CYC( 1 ) );
 
 // ADC - Add with Carry
 #define ADC_( A_, M_, C_ ) ans = cpu.accumulator + ( M_ + CARRY_ ), SET_OVERFLOW_( A_, M_ ), CARRY_ = CARRY_ADD3_8_( A_, M_, C_ ), SET_ZERO_( ans ), SET_NEGATIVE_( ans ), A_ = ans

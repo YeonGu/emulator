@@ -117,39 +117,10 @@ void ppu::mwrite( addr_t addr, byte data )
     map_addr( addr ) = data;
 }
 
-void ppu_reg_write( int idx, byte data )
+extern byte ppu_iobus_value;
+void        ppu_reg_write( int idx, byte data )
 {
-    //    idx %= 8;
-    //    assert( idx <= 7 );
-    //
-    //    //    if ( ( idx == 0 ) )
-    //    //        printf( "PPU reg_data write reg %x, %02x\n", idx, reg_data );
-    //    switch ( idx )
-    //    {
-    //    case 6:
-    //        //        printf( "PPU reg_data write reg 06, %02x\n", reg_data );
-    //        ppu_inst->get_reg_data( idx ) = data;
-    //        static addr_t tmp_addr;
-    //        if ( ppu_inst->write_toggle )
-    //            tmp_addr = tmp_addr & 0x00FF | ( (uint16_t) data << 8 ); // Set higher bits in tmp
-    //        else
-    //        {
-    //            tmp_addr            = tmp_addr & 0xFF00 | data; // Set lower bits in tmp, set the vaddr
-    //            ppu_inst->vram_addr = tmp_addr;
-    //        }
-    //        ppu_inst->write_toggle = !ppu_inst->write_toggle;
-    //        break;
-    //
-    //    case 7: // write to ppudata (0x7)
-    //            //        printf( "PPU reg_data write at %04x, %02x\n", ppu_inst->vram_addr, reg_data );
-    //        //        if ( ppu_inst->vram_addr < 0x2000 ) break;
-    //        ppu_inst->mwrite( ppu_inst->vram_addr, data );
-    //        ppu_inst->vram_addr += ( get_vram_inc() ) ? 32 : 1;
-    //        break;
-    //    default:
-    //        ppu_inst->get_reg_data( idx ) = data;
-    //        break;
-    //    }
+    ppu_iobus_value = data;
     ppu_inst->ppu_io_reg[ idx % 8 ].write_handler( data );
 }
 

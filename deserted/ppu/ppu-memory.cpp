@@ -50,7 +50,7 @@ void add_new_ppumap( char *name, int type, addr_t ppu_mem_addr, addr_t size, uin
     nr_ppu_map++;
 }
 void init_ppu_nametable_map( int mirtype );
-void init_palette_memory( struct ppu_mem_map_t *map, int *nr_ppu_map );
+void init_palette_memory( struct ppu_mem_map_t *map );
 void init_ppu_memory_map()
 {
     NEW_MAP( 0, "pattern_table_0", TYPE_PHYSICAL, 0x0000, 0x1000, get_chr_rom( 0 ) );
@@ -78,7 +78,7 @@ void init_ppu_memory_map()
     ppu_memory_map[ nr_ppu_map - 1 ].mirror_to = 0x2000;
 
     //    NEW_MAP( 7, "palette_ram_indexes", TYPE_PHYSICAL, 0x3F00, 0x0020, palette_ram_indexes );
-    init_palette_memory( ppu_memory_map, &nr_ppu_map );
+    init_palette_memory( ppu_memory_map );
     NEW_MAP( 8, "palette_mirror", TYPE_MIRROR, 0x3F20, 0x0020, NULL );
     ppu_memory_map[ nr_ppu_map - 1 ].mirror_to = 0x3F00;
 }

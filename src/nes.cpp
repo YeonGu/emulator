@@ -9,8 +9,11 @@
 
 #include <SDL2/SDL.h>
 #include <cpu.h>
-#include <ppu-reg.h>
-#include <stdio.h>
+#include <cstdio>
+#include <input_manager.h>
+#include <ppu.h>
+// #include <ppu-reg.h>
+
 void cpu_call_interrupt();
 int  sdl_test();
 void render_bg( uint32_t *vmem );
@@ -21,47 +24,54 @@ SDL_Texture  *texture;
 SDL_Surface  *surface;
 
 static uint32_t vmem[ 256 * 240 ];
+uint8_t        *get_chr_rom( int idx );
 
+void test_loop();
 void nes_mainloop()
 {
-    //    if ( SDL_Init( SDL_INIT_VIDEO ) < 0 )
-    //    {
-    //        printf( "SDL Init failed" );
-    //        return;
-    //    }
-    //    printf( "SDL Init succeeded" );
+    ppu_inst = new ppu( get_chr_rom( 0 ), HORIZON_SCREEN );
+
     sdl_test();
     printf( "Entered NES mainloop.\n" );
-    cpu_exec( 15000 );
+    cpu_exec( 39900 );
 
     set_ppu_nmi_enable( true );
+    test_loop();
 
-    //    set_ppu_nmi( true );
-    //    cpu_call_interrupt();
-    //    cpu_exec( 300 );
-    //    set_ppu_nmi( false );
-
-    int i = 10;
-    while ( 1 )
-    {
-        cpu_exec( 29780 );
-        set_ppu_nmi( true );
-
-        printf( "cpu enter int %d\n", 100 - i );
-        cpu_call_interrupt();
-        //        cpu_exec( 1400 );
-        //        set_ppu_nmi( false );
-        //        cpu_exec( 400 );
-
-        render_bg( vmem );
-        SDL_UpdateTexture( texture, NULL, vmem, 256 * sizeof( uint32_t ) );
-        SDL_RenderClear( renderer );
-        SDL_RenderCopy( renderer, texture, NULL, NULL );
-        SDL_RenderPresent( renderer );
-    }
-    cpu_exec( 1000 );
     system( "pause" );
     printf( "Exit NES mainloop.\n" );
+}
+
+void test_loop()
+{
+    int test_times = 30;
+    while ( 1 )
+    {
+        int cyc = 29781;
+        while ( cyc-- )
+        {
+            ppu_inst->step( vmem );
+            ppu_inst->step( vmem );
+            ppu_inst->step( vmem );
+            cpu_step();
+        }
+
+        SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );
+        SDL_RenderClear( renderer );
+        SDL_RenderCopy( renderer, texture, nullptr, nullptr );
+        SDL_RenderPresent( renderer );
+        scan_input();
+    }
+
+    // Only for test: print the ciram content
+    for ( auto i : ppu_inst->ciram_0 )
+    {
+        static int addr = 0x2000;
+        printf( "%02x ", i );
+        addr++;
+        if ( !( addr % 0x20 ) )
+            printf( "\n" );
+    }
 }
 
 int sdl_test()
@@ -75,11 +85,11 @@ int sdl_test()
 
     // 创建窗口
     SDL_Window *sdlwindow = SDL_CreateWindow(
-        "SDL窗口",               // 窗口标题
+        "NES EMULATOR",          // 窗口标题
         SDL_WINDOWPOS_UNDEFINED, // 窗口的初始位置
         SDL_WINDOWPOS_UNDEFINED,
-        256,             // 窗口的宽度
-        240,             // 窗口的高度
+        512,             // 窗口的宽度
+        480,             // 窗口的高度
         SDL_WINDOW_SHOWN // 窗口的显示标志
     );
 

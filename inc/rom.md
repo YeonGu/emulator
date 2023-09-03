@@ -1,6 +1,6 @@
 # File Structure
 
-A NES 2.0 file contains a sixteen-byte header, followed by Trainer, PRG-ROM, CHR-ROM and Miscellaneous ROM data.
+A NES 2.0 file contains a sixteen-byte header, followed by Trainer, PRG-ROM, CHR-ROM and Miscellaneous ROM reg_data.
 
 Header
 Offset Meaning
@@ -22,7 +22,7 @@ NNNN FTBM
 |||| || 1: Present
 |||| |+--- 512-byte Trainer
 |||| | 0: Not present
-|||| | 1: Present between Header and PRG-ROM data
+|||| | 1: Present between Header and PRG-ROM reg_data
 |||| +---- Hard-wired four-screen mode
 |||| 0: No
 |||| 1: Yes

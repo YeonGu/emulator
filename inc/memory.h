@@ -13,7 +13,7 @@
 #define RESET_VECTOR_ADDR 0xFFFC
 #define IRQ_BRK_VECTOR_ADDR 0xFFFE
 
-#define addr_t uint16_t
+using addr_t = uint16_t;
 
 struct cpu_mem_map_t
 {

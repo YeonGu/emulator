@@ -14,6 +14,7 @@
 
 void init_cpu();
 void cpu_exec( int n );
+void cpu_step();
 
 // https://www.nesdev.org/obelisk-6502-guide/registers.html#N
 /**

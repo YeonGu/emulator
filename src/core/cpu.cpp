@@ -13,11 +13,14 @@ extern struct cpu_6502_t cpu;
 extern addr_t            RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 extern int64_t           nr_cycles;
 
-void cpu_exec_once( FILE *file );
+// void cpu_exec_once( FILE *file );
 
 /**
  * CPU Power on https://www.nesdev.org/wiki/CPU_power_up_state
  * */
+
+void cpu_opcode_register();
+
 void init_cpu()
 {
     printf( "CPU init...\n" );
@@ -26,6 +29,8 @@ void init_cpu()
     cpu.status.ps = 0x24;
     cpu.sp        = 0xFD;
     cpu.pc        = RESET_VECTOR;
+
+    cpu_opcode_register();
 }
 
 void cpu_exec( int cycles )
@@ -37,8 +42,12 @@ void cpu_exec( int cycles )
     assert( difftest_file );
     printf( "Difftest file loaded.\n" );
 #endif
-    while ( nr_cycles - gtime <= cycles )
+    //    while ( nr_cycles - gtime <= cycles )
+    //    {
+    //        cpu_exec_once( difftest_file );
+    //    }
+    while ( cycles-- )
     {
-        cpu_exec_once( difftest_file );
+        cpu_step();
     }
 }

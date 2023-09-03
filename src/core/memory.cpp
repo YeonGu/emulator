@@ -19,21 +19,6 @@ struct cpu_mem_map_t *find_cpu_map( addr_t addr );
 void init_memory()
 {
     auto vmmu = get_mmu();
-    vmmu->mmap(0x0, nullptr,0x10000,[](uint16_t addr){
-        struct cpu_mem_map_t *map = find_cpu_map( addr );
-        assert( map );
-        addr_t offset = addr - map->nes_begin;
-
-        if ( map->mem_read_handler ) map->mem_read_handler( offset );
-        uint8_t res = map->map_begin[ offset ];
-
-        return res;
-    }, [](uint16_t addr,uint8_t data){
-        struct cpu_mem_map_t *map = find_cpu_map( addr );
-        addr_t offset = addr - map->nes_begin;
-        map->map_begin[ offset ] = data;
-        if ( map->mem_write_handler ) map->mem_write_handler( offset, data );
-    });
     //PPU MEM
     vmmu->mmap(0x2000, nullptr,0x3FFF - 0x2000 + 1,[](uint16_t addr) -> uint16_t{
         return ppu_reg_read( addr % 8 );

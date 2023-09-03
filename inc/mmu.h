@@ -34,7 +34,7 @@ class mmu
   private:
     struct mmap_t
     {
-        void*          addr;
+        data_t*          addr;
         read_behaviour  _read_b;
         write_behaviour _write_b;
     }      *_mmap;
@@ -45,32 +45,32 @@ class mmu
         _mmap     = new mmap_t[ vaddr_max_size ];
     }
 
-    void* vaddr_to_addr( addr_t vaddr )
+    data_t* vaddr_to_addr( addr_t vaddr ) const
     {
         return _mmap[ vaddr ].addr;
     }
 
-    void mmap( addr_t vaddr, const void* addr, size_t size )
+    void mmap( addr_t vaddr,data_t* addr, size_t size )
     {
         for ( size_t offset = 0; offset < size; offset++ )
         {
-            _mmap[ vaddr + offset ].addr    = (char*)addr + offset;
+            _mmap[ vaddr + offset ].addr    = &addr[offset];
             _mmap[ vaddr + offset ]._read_b = [ & ]( addr_t _vaddr ) -> data_t {
-                return  *(data_t *)this->vaddr_to_addr( _vaddr );
+                return  *this->vaddr_to_addr( _vaddr );
             };
             _mmap[ vaddr + offset ]._write_b = [ & ]( addr_t _vaddr, data_t _data ) -> void {
-                *(data_t *)this->vaddr_to_addr( vaddr ) = _data;
+                *this->vaddr_to_addr( _vaddr ) = _data;
             };
         }
     }
 
-    void mmap( addr_t vaddr, const void* addr, size_t size,
+    void mmap( addr_t vaddr, data_t* addr, size_t size,
                read_behaviour  read_b,
                write_behaviour write_b )
     {
         for ( size_t offset = 0; offset < size; offset++ )
         {
-            _mmap[ vaddr + offset ].addr     = (char*)addr + offset;
+            _mmap[ vaddr + offset ].addr     = &addr[offset];
             _mmap[ vaddr + offset ]._read_b  = read_b;
             _mmap[ vaddr + offset ]._write_b = write_b;
         }

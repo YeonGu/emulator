@@ -8,6 +8,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "memory.h"
+#include "mmu.h"
 
 struct cpu_mem_map_t cpu_memory_mapper[ 16 ];
 int                  nr_cpu_mapper;
@@ -20,24 +21,6 @@ static uint8_t apu_snd_chn;
 static uint8_t sram[ 0x2000 ];
 static uint8_t joystick[ 2 ];
 
-struct cpu_mem_map_t *find_cpu_map( addr_t addr )
-{
-    for ( int i = nr_cpu_mapper - 1; i >= 0; i-- )
-    {
-        if ( cpu_memory_mapper[ i ].nes_begin > addr )
-            continue;
-
-        if ( addr >= cpu_memory_mapper[ i ].nes_begin + cpu_memory_mapper[ i ].map_size )
-        {
-            printf( "memory mapping %04x out of bound/not implemented.\n", addr );
-            assert( 0 );
-        }
-        return &cpu_memory_mapper[ i ];
-    }
-    printf( "memory mapping %04x out of bound/not implemented.\n", addr );
-    return NULL;
-}
-
 /**
  * https://www.nesdev.org/wiki/CPU_memory_map
  * */
@@ -49,12 +32,10 @@ uint8_t *get_ppu_reg( int idx );
 extern struct ppu_reg_t ppu_reg; // $2000 PPU reg, PPU
 extern uint8_t          oamdma;  // $4014 OAM DMA, PPU
 
-#define NEW_MAP( name_, addr_, size_, p )                 \
-    cpu_memory_mapper[ nr_cpu_mapper ].map_name  = name_; \
-    cpu_memory_mapper[ nr_cpu_mapper ].nes_begin = addr_; \
-    cpu_memory_mapper[ nr_cpu_mapper ].map_size  = size_; \
-    cpu_memory_mapper[ nr_cpu_mapper ].map_begin = p;     \
-    nr_cpu_mapper++
+#define NEW_MAP( name_, addr_, size_, p ) \
+    get_mmu()->mmap(addr_,p,size_)
+
+
 void init_mapper( struct nes_rom_info_t *info )
 {
     //////////////////////////////////////////////////////////////////////

@@ -95,25 +95,39 @@ void ppu::init_io_register_handlers()
     };
 
     // $2007
+    // FIXME: how does this piece of shit actually work???
     ppu_io_reg[ PPUREG_DATA ].write_handler = [ this ]( byte data ) {
         mwrite( vram_addr, data );
     };
     ppu_io_reg[ PPUREG_DATA ].read_handler = [ this ]() {
         static byte data_latch;
 
-        if ( ppu_2007_first_read )
-            ppu_2007_first_read = false;
-        else
-            vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
-        auto addr = vram_addr % 0x4000;
+        if ( vram_addr >= 0x3F00 ) // in palette_ram.nes test, reported:
+        {                          // 2) Palette read shouldn't be buffered like other VRAM
+            if ( ppu_2007_first_read )
+                ppu_2007_first_read = false;
+            else
+                vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
 
-        if ( addr >= 0x3F00 ) // in palette_ram.nes test, reported:
-        {                     // 2) Palette read shouldn't be buffered like other VRAM
-            data_latch = mread( addr );
-            return data_latch;
+            auto addr  = vram_addr % 0x4000;
+            byte data  = mread( addr );
+            data_latch = mread( addr - 0x1000 );
+
+            return data;
         }
-        auto item = mread( addr );
-        std::swap( data_latch, item );
-        return item;
+        else
+        {
+
+            auto addr = vram_addr % 0x4000;
+
+            auto item = mread( addr );
+            std::swap( data_latch, item );
+
+            if ( ppu_2007_first_read )
+                ppu_2007_first_read = false;
+            else
+                vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
+            return item;
+        }
     };
 }

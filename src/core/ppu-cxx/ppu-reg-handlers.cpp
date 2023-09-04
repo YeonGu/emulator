@@ -91,6 +91,7 @@ void ppu::init_io_register_handlers()
     };
 
     // $2007
+    // FIXME: how does this piece of shit actually work???
     ppu_io_reg[ PPUREG_DATA ].write_handler = [ this ]( byte data ) {
         mwrite( vram_addr, data );
         vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;

@@ -93,27 +93,36 @@ void cpu_exec_once( FILE *file )
 
 void cpu_call_nmi()
 {
-    if ( INTR_DIS_ )
-        return;
-
-    //      #  address R/W description
-    // --- ------- --- -----------------------------------------------
-    //  1    PC     R  fetch opcode (and discard it - $00 (BRK) is forced into the opcode register instead)
-    //  2    PC     R  read next instruction byte (actually the same as above, since PC increment is suppressed. Also discarded.)
-    //  3  $0100,S  W  push PCH on stack, decrement S
-    //  4  $0100,S  W  push PCL on stack, decrement S
-    // *** At this point, the signal status determines which interrupt vector is used ***
-    //  5  $0100,S  W  push P on stack (with B flag *clear*), decrement S
-    //  6   A       R  fetch PCL (A = FFFE for IRQ, A = FFFA for NMI), set I flag
-    //  7   A       R  fetch PCH (A = FFFF for IRQ, A = FFFB for NMI)
     STACK_PUSH_( cpu.pc >> 8 );
     STACK_PUSH_( cpu.pc );
     nr_cycles += 4;
-    STACK_PUSH_( cpu.status.ps & 0b11001111 );
-    cpu.status.ps &= 0b11001111;
-    cpu.status.ps |= 0b100000;
+
+    FLAG_B_   = 0x10;
+    INTR_DIS_ = 1;
+    STACK_PUSH_( cpu.status.ps );
+
+    // cpu.status.ps &= 0b11001111;
+    // cpu.status.ps |= 0b100000;
     cpu.pc = NMI_VECTOR;
-    nr_cycles += 3;
+    nr_cycles += 4;
+}
+void cpu_call_irq()
+{
+    if ( INTR_DIS_ )
+        return;
+
+    STACK_PUSH_( cpu.pc >> 8 );
+    STACK_PUSH_( cpu.pc );
+    nr_cycles += 4;
+
+    FLAG_B_   = 0b10;
+    INTR_DIS_ = 1;
+    STACK_PUSH_( cpu.status.ps );
+
+    // cpu.status.ps &= 0b11001111;
+    // cpu.status.ps |= 0b100000;
+    cpu.pc = IRQ_BRK_VECTOR;
+    nr_cycles += 4;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -250,10 +259,11 @@ void cpu_opcode_register()
         system( "pause" );
         assert( 0 );
     } );
-    // TODO: BRK Interrupt
     INSTPAT( "BRK", 0x00, IMPLICIT,
              STACK_PUSH_( cpu.pc >> 8 ), STACK_PUSH_( cpu.pc ),
-             cpu.status.ps |= 0x34, STACK_PUSH_( cpu.status.ps ), cpu.pc = IRQ_BRK_VECTOR, CYC( 1 ) );
+             INTR_DIS_ = 1, FLAG_B_ = 0b11, STACK_PUSH_( cpu.status.ps ),
+             FLAG_B_ = 0b10,
+             cpu.pc  = IRQ_BRK_VECTOR, CYC( 1 ) );
 
 // ADC - Add with Carry
 #define ADC_( A_, M_, C_ ) ans = cpu.accumulator + ( M_ + CARRY_ ), SET_OVERFLOW_( A_, M_ ), CARRY_ = CARRY_ADD3_8_( A_, M_, C_ ), SET_ZERO_( ans ), SET_NEGATIVE_( ans ), A_ = ans
@@ -473,7 +483,9 @@ void cpu_opcode_register()
     // PHA - Push Accumulator
     INSTPAT( "PHA", 0x48, IMPLICIT, STACK_PUSH_( cpu.accumulator ) );
     // PHP - Push Processor Status
-    INSTPAT( "PHP", 0x08, IMPLICIT, STACK_PUSH_( cpu.status.ps | 0b110000 ) );
+    INSTPAT( "PHP", 0x08, IMPLICIT,
+             FLAG_B_ = 0b11, STACK_PUSH_( cpu.status.ps ),
+             FLAG_B_ = 0 );
     // PLA - Pull Accumulator
     INSTPAT( "PLA", 0x68, IMPLICIT,
              cpu.accumulator = STACK_POP_,
@@ -500,7 +512,7 @@ void cpu_opcode_register()
     // RTI - Return from Interrupt
     INSTPAT( "RTI", 0x40, IMPLICIT, cpu.status.ps = STACK_POP_,
              cpu.pc = STACK_POP_, cpu.pc |= ( STACK_POP_ << 8 ),
-             cpu.status.ps &= 0xEF, cpu.status.ps |= 0x20, CYC( 1 ) ); // Set flagb to 2'b01
+             cpu.status.ps &= 0xEF, cpu.status.flag.flag_b = 1, CYC( 1 ) ); // Set flagb to 2'b01
 
     // RTS - Return from Subroutine
     INSTPAT( "RTS", 0x60, IMPLICIT,
@@ -585,7 +597,7 @@ void cpu_opcode_register()
     INSTPAT( "LAX", 0xB3, INDIRECT_INDEXED, LAX_( M ), CYC( cross_page ) );
 
     // SAX - Store Accumulator & x
-#define SAX_( addr ) vaddr_write( addr, cpu.accumulator & cpu.x )
+#define SAX_( addr ) vaddr_write( addr, cpu.accumulator &cpu.x )
     INSTPAT( "SAX", 0x87, ZEROPAGE, SAX_( zeropage_addr ) );
     INSTPAT( "SAX", 0x97, ZEROPAGE_Y, SAX_( zeropage_addr ) );
     INSTPAT( "SAX", 0x8F, ABSOLUTE, SAX_( absolute_addr ) );

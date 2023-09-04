@@ -48,15 +48,16 @@ int  read_rom_mapper( int argc, char **argv )
 {
     // TODO: get the rom file path...
 
-    //    rom_file = "../rom-fix/2.Backward_Branch.nes"; // pass(all branch timing)
     //    rom_file = "../rom-fix/test_cpu_exec_space_ppuio.nes"; // FIXME
     //    rom_file = "../rom-test/ppu/power_up_palette.nes"; // FIXME
+    //    rom_file = "../rom-test/cpu_interrupts_v2/rom_singles/1-cli_latency.nes"; // FIXME
+
     //    rom_file = "../rom-fix/nestest.nes"; // pass
     //    rom_file = "../rom-test/ppu/palette_ram.nes"; // pass
+    //    rom_file = "../rom-fix/2.Backward_Branch.nes"; // pass(all branch timing)
     //    rom_file = "../rom-test/ppu/vbl_clear_time.nes"; // pass
     //    rom_file = "../rom-test/ppu/vram_access.nes";
-    //    rom_file = "../rom-test/cpu_interrupts_v2/rom_singles/1-cli_latency.nes"; // FIXME
-    rom_file = "../rom-test/instr_test-v5/rom_singles/02-implied.nes";
+    //    rom_file = "../rom-test/instr_test-v5/rom_singles/02-implied.nes";
     //    rom_file = "../rom-fix/test_cpu_flag_concurrency.nes"; // pass
     //    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\f1.nes";
     //    rom_file = "E:\\0 SEU\\2023\\TiNES\\emulator\\rom\\kungfu.nes";

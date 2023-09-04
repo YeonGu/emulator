@@ -55,7 +55,7 @@ class ppu
     void init_io_register_handlers();
     struct ppu_io_register_t
     {
-        byte              reg_data;
+        byte              reg_data     = 0;
         reg_read_behavior read_handler = [ this ]() {
             return reg_data;
         };

@@ -9,10 +9,8 @@
 
 #include <cstdio>
 #include <ppu.h>
-using reg_read_behavior  = std::function<byte()>;
-using reg_write_behavior = std::function<void( byte )>;
-byte        ppu_iobus_value; // https://www.nesdev.org/wiki/Open_bus_behavior
-static bool ppu_2007_first_read = true;
+
+byte ppu_iobus_value; // https://www.nesdev.org/wiki/Open_bus_behavior
 
 void ppu::init_io_register_handlers()
 {
@@ -37,7 +35,6 @@ void ppu::init_io_register_handlers()
         ppu_io_reg[ PPUREG_STATUS ].reg_data = data;
     };
     ppu_io_reg[ PPUREG_STATUS ].read_handler = [ this ]() -> byte {
-        ppu_2007_first_read = true;
         return ppu_io_reg[ PPUREG_STATUS ].reg_data;
     };
 
@@ -73,7 +70,6 @@ void ppu::init_io_register_handlers()
 
     // $2006 ADDRESS >> write x2
     ppu_io_reg[ PPUREG_ADDR ].write_handler = [ this ]( byte data ) {
-        ppu_2007_first_read = true;
         if ( !write_toggle )
         {
             write_toggle                       = true;
@@ -97,23 +93,24 @@ void ppu::init_io_register_handlers()
     // $2007
     ppu_io_reg[ PPUREG_DATA ].write_handler = [ this ]( byte data ) {
         mwrite( vram_addr, data );
+        vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
     };
     ppu_io_reg[ PPUREG_DATA ].read_handler = [ this ]() {
         static byte data_latch;
+        addr_t      addr = vram_addr % 0x4000;
+        byte        data;
 
-        if ( ppu_2007_first_read )
-            ppu_2007_first_read = false;
-        else
-            vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
-        auto addr = vram_addr % 0x4000;
-
-        if ( addr >= 0x3F00 ) // in palette_ram.nes test, reported:
-        {                     // 2) Palette read shouldn't be buffered like other VRAM
-            data_latch = mread( addr );
-            return data_latch;
+        if ( addr >= 0x3F00 )
+        {
+            data       = mread( addr );
+            data_latch = mread( addr - 0x1F00 );
         }
-        auto item = mread( addr );
-        std::swap( data_latch, item );
-        return item;
+        else
+        {
+            data = mread( addr );
+            std::swap( data_latch, data );
+        }
+        vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
+        return data;
     };
 }

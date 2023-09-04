@@ -14,7 +14,7 @@
 #include <ppu.h>
 // #include <ppu-reg.h>
 
-void cpu_call_interrupt();
+void cpu_call_nmi();
 int  sdl_test();
 void render_bg( uint32_t *vmem );
 

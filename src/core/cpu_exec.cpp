@@ -11,15 +11,16 @@
 #include "cpu.h"
 #include "cpu_datas.h"
 #include "ppu.h"
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <functional>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <vector>
 
 struct cpu_6502_t cpu = {};
 void              cpu_exec_once( FILE *file );
-static uint32_t   nr_insts_exec;
+uint32_t          nr_insts_exec;
 int64_t           nr_cycles;
 int64_t           current_cycles;
 
@@ -35,31 +36,42 @@ int64_t           current_cycles;
 extern addr_t RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 //////////////////////////////////////////////////////////////////////
 void cpu_call_nmi();
+void cpu_call_irq();
 bool get_nmi_sig();
 void cpu_step()
 {
-    if ( get_nmi_sig() )
-    {
-        cpu_call_nmi();
-        // set_ppu_nmi( false );
-    }
+    //    if ( get_nmi_sig() )
+    //    {
+    //        cpu_call_nmi();
+    //    }
     if ( current_cycles++ < nr_cycles )
         return;
     cpu_exec_once( nullptr );
 }
 
-void cpu_decode_exec( uint8_t opcode );
+void         cpu_decode_exec( uint8_t opcode );
+static char  itrace_log[ 64 ];
+extern FILE *log_file;
+
 void cpu_exec_once( FILE *file )
 {
-
     nr_insts_exec++;
     addr_t  pc     = cpu.pc;
     uint8_t opcode = vaddr_read( cpu.pc );
     //    if ( opcode == 0x40 ) printf( "CPU Return Int\n" );
 
-#ifdef CONFIG_DIFFTEST
-    char itrace_log[ 64 ];
+#ifdef CONFIG_LOG_OUTPUT
+    if ( nr_insts_exec <= CONFIG_MAX_LOGS )
+        std::fprintf( log_file, "%04X  %02X    A:%02X X:%02X Y:%02X P:%02X SP:%02X\n",
+                      pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
+#endif // CONFIG_LOG_OUTPUT
+
+#ifdef CONFIG_ITRACE
     sprintf( itrace_log, "%04X  %02X    A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
+    printf( "%d| cycles:%d  %s", nr_insts_exec, nr_cycles, itrace_log );
+#endif // CONFIG_ITRACE
+
+#ifdef CONFIG_DIFFTEST
     printf( "%d| cycles:%d  %s", nr_insts_exec, nr_cycles, itrace_log );
     char itrace_log[ 64 ];
     sprintf( itrace_log, "%04X  %02X    A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", pc, opcode, cpu.accumulator, cpu.x, cpu.y, cpu.status.ps, cpu.sp );
@@ -97,7 +109,7 @@ void cpu_call_nmi()
     STACK_PUSH_( cpu.pc );
     nr_cycles += 4;
 
-    FLAG_B_   = 0x10;
+    FLAG_B_   = 0b10;
     INTR_DIS_ = 1;
     STACK_PUSH_( cpu.status.ps );
 
@@ -316,9 +328,9 @@ void cpu_opcode_register()
     INSTPAT( "BIT", 0x24, ZEROPAGE,
              SET_ZERO_( ( vaddr_read( zeropage_addr ) & cpu.accumulator ) ),
              SET_NEGATIVE_( vaddr_read( zeropage_addr ) ), OVERFLOW_ = ( vaddr_read( zeropage_addr ) >> 6 ) & 1 );
-    INSTPAT( "BIT", 0x2C, ABSOLUTE,
-             SET_ZERO_( ( vaddr_read( absolute_addr ) & cpu.accumulator ) ),
-             SET_NEGATIVE_( vaddr_read( absolute_addr ) ), OVERFLOW_ = vaddr_read( absolute_addr ) >> 6 & 1 );
+    INSTPAT( "BIT", 0x2C, ABSOLUTE, M = vaddr_read( absolute_addr ),
+             SET_ZERO_( ( M & cpu.accumulator ) ),
+             SET_NEGATIVE_( M ), OVERFLOW_ = M >> 6 & 1 );
 
     // BCC - Branch if Carry Clear
     INSTPAT( "BCC", 0x90, RELATIVE,
@@ -597,7 +609,7 @@ void cpu_opcode_register()
     INSTPAT( "LAX", 0xB3, INDIRECT_INDEXED, LAX_( M ), CYC( cross_page ) );
 
     // SAX - Store Accumulator & x
-#define SAX_( addr ) vaddr_write( addr, cpu.accumulator &cpu.x )
+#define SAX_( addr ) vaddr_write( addr, cpu.accumulator & cpu.x )
     INSTPAT( "SAX", 0x87, ZEROPAGE, SAX_( zeropage_addr ) );
     INSTPAT( "SAX", 0x97, ZEROPAGE_Y, SAX_( zeropage_addr ) );
     INSTPAT( "SAX", 0x8F, ABSOLUTE, SAX_( absolute_addr ) );

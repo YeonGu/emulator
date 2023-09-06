@@ -10,7 +10,8 @@
 #include <cstdio>
 #include <ppu.h>
 
-byte ppu_iobus_value; // https://www.nesdev.org/wiki/Open_bus_behavior
+byte        ppu_iobus_value; // https://www.nesdev.org/wiki/Open_bus_behavior
+static byte data_latch;
 
 void ppu::init_io_register_handlers()
 {
@@ -35,7 +36,10 @@ void ppu::init_io_register_handlers()
         ppu_io_reg[ PPUREG_STATUS ].reg_data = data;
     };
     ppu_io_reg[ PPUREG_STATUS ].read_handler = [ this ]() -> byte {
-        return ppu_io_reg[ PPUREG_STATUS ].reg_data;
+        auto data = ( ppu_io_reg[ PPUREG_STATUS ].reg_data & 0xE0 ) | ( data_latch & 0x1F );
+
+        reinterpret_cast<ppustatus_flag_t &>( ppu_io_reg[ PPUREG_STATUS ].reg_data ).nmi_flag = 0;
+        return data;
     };
 
     // $2003
@@ -97,9 +101,8 @@ void ppu::init_io_register_handlers()
         vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
     };
     ppu_io_reg[ PPUREG_DATA ].read_handler = [ this ]() {
-        static byte data_latch;
-        addr_t      addr = vram_addr % 0x4000;
-        byte        data;
+        addr_t addr = vram_addr % 0x4000;
+        byte   data;
 
         if ( addr >= 0x3F00 )
         {

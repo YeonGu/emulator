@@ -33,9 +33,9 @@ void nes_mainloop()
 
     sdl_test();
     printf( "Entered NES mainloop.\n" );
-    cpu_exec( 39900 );
+    //    cpu_exec( 39900 );
 
-    set_ppu_nmi_enable( true );
+    //    set_ppu_nmi_enable( true );
     test_loop();
 
     system( "pause" );

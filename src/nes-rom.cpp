@@ -59,9 +59,9 @@ int  read_rom_mapper( int argc, char **argv )
     //    rom_file = "../rom/f1.nes";
     //    rom_file = "../rom/kungfu.nes";
     //    rom_file = "../rom/pacman.nes";
-    rom_file = "../rom/mario.nes";
-    //    rom_file = "../rom/Donkey Kong (Japan).nes";
     //    rom_file = "../rom/circus.nes";
+    //    rom_file = "../rom/Donkey Kong (Japan).nes";
+    rom_file = "../rom/mario.nes";
 
     if ( argc == 1 )
         printf( "No file target is given. Use the default mario file.\n" );

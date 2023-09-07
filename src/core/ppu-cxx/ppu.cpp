@@ -194,42 +194,6 @@ uint32_t ppu::get_bg_color( int x, int y )
     return get_bg_palette_color( plte_section * 4 + plte_idx );
 }
 
-void cpu_call_nmi();
-void ppu::step( uint32_t *vmem )
-{
-    if ( ( scanline == -1 ) && ( line_cycle == 339 ) && ( frame_cnt % 2 ) ) // skip the last pixel in odd frame
-        line_cycle++;
-    else if ( scanline >= 0 && scanline <= 239 ) // Visible-render
-    {
-        if ( !line_cycle )
-            int a = 0;
-        else if ( line_cycle <= 256 )
-        {
-            int offset     = scanline * 256 + line_cycle - 1;
-            vmem[ offset ] = get_bg_color( line_cycle - 1, scanline );
-        }
-    }
-    else if ( scanline == 241 && line_cycle == 1 )
-    {
-        reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 1;
-        if ( reinterpret_cast<ppuctrl_flag_t &>( get_reg_data( PPUREG_CTRL ) ).nmi_enable )
-        { // During Frame 0, 1, NMI is disabled.
-            cpu_call_nmi();
-        }
-    }
-    else if ( scanline == 260 && line_cycle == 332 ) // The VBL flag ($2002.7) is cleared by the PPU around 2270 CPU clocks
-    {                                                //        after NMI occurs. (vbl clear time test)
-        reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 0;
-    }
-
-    // status update
-    if ( line_cycle == 340 )
-        scanline = ( scanline == 260 ) ? -1 : scanline + 1;
-    if ( line_cycle == 340 && ( scanline == 260 ) )
-        frame_cnt++;
-    line_cycle = ( line_cycle == 340 ) ? 0 : line_cycle + 1;
-}
-
 bool is_ppu_nmi_enable()
 {
     return reinterpret_cast<ppuctrl_flag_t &>( ppu_inst->get_reg_data( PPUREG_CTRL ) ).nmi_enable;

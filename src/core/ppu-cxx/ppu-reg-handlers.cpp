@@ -13,14 +13,23 @@
 byte        ppu_iobus_value; // https://www.nesdev.org/wiki/Open_bus_behavior
 static byte data_latch;
 
+////////////////////////////////////////////////////////////////////////////////////////
+// PPU internal regs. see: PPU scroll (From ppu.h)
+// addr_t vram_addr.data    = 0;
+// addr_t tmp_addr.data     = 0;
+// byte   finex_scroll = 0;
+// bool   write_toggle = false;
+
 void ppu::init_io_register_handlers()
 {
     // $2000 CTRL > write
     ppu_io_reg[ PPUREG_CTRL ].write_handler = [ this ]( byte data ) -> void {
-        tmp_addr &= 0x3FF;
-        tmp_addr |= data & 0x3 << 10;
+        //        tmp_addr.data &= 0x3FF;
+        //        tmp_addr.data |= data & 0x3 << 10;
         ppu_io_reg[ PPUREG_CTRL ].reg_data = data;
+        tmp_addr.nametable_select          = data & 0x3;
     };
+
     ppu_io_reg[ PPUREG_CTRL ].read_handler = [ this ]() -> byte {
         return ppu_iobus_value;
     };
@@ -49,23 +58,28 @@ void ppu::init_io_register_handlers()
     ppu_io_reg[ PPUREG_OAMADDR ].read_handler = [ this ]() -> byte {
         return ppu_iobus_value;
     };
+
     // $2005 SCROLL >> write x2
     ppu_io_reg[ PPUREG_SCROLL ].write_handler = [ this ]( byte data ) {
-        if ( !write_toggle )
-        { // $2005 first write
-            write_toggle                         = true;
+        if ( !write_toggle ) // $2005 first write
+        {
             ppu_io_reg[ PPUREG_SCROLL ].reg_data = data;
-            tmp_addr &= 0x1F;
-            tmp_addr |= ( data >> 3 );
-            finex_scroll = data & 0x7;
+            write_toggle                         = true;
+            finex_scroll                         = data & 0x7;
+            //            tmp_addr.data &= 0x1F;
+            //            tmp_addr.data |= ( data >> 3 );
+            tmp_addr.coarse_x = data >> 3;
         }
         else // second write
         {
-            write_toggle                         = false;
             ppu_io_reg[ PPUREG_SCROLL ].reg_data = data;
-            tmp_addr &= 0xC1F;
-            tmp_addr |= data & 0x7 << 12;
-            tmp_addr |= data >> 3 << 5;
+            write_toggle                         = false;
+            //            tmp_addr.data &= 0xC1F;
+            //            tmp_addr.data |= data & 0x7 << 12;
+            //            tmp_addr.data |= data >> 3 << 5;
+            tmp_addr.coarse_y_l = data >> 3;
+            tmp_addr.coarse_y_h = data >> 6;
+            tmp_addr.fine_y     = data & 0x7;
         }
     };
     ppu_io_reg[ PPUREG_SCROLL ].read_handler = [ this ]() -> byte {
@@ -76,18 +90,18 @@ void ppu::init_io_register_handlers()
     ppu_io_reg[ PPUREG_ADDR ].write_handler = [ this ]( byte data ) {
         if ( !write_toggle )
         {
-            write_toggle                       = true;
             ppu_io_reg[ PPUREG_ADDR ].reg_data = data;
-            tmp_addr                           = 0;
-            tmp_addr |= (addr_t) ( data & 0x3F ) << 8;
+            write_toggle                       = true;
+            tmp_addr.data                      = 0;
+            tmp_addr.data |= (addr_t) ( data & 0x3F ) << 8;
         }
         else
         {
             write_toggle                       = false;
             ppu_io_reg[ PPUREG_ADDR ].reg_data = data;
-            tmp_addr &= 0xFF00;
-            tmp_addr |= data;
-            vram_addr = tmp_addr;
+            tmp_addr.data &= 0xFF00;
+            tmp_addr.data |= data;
+            vram_addr.data = tmp_addr.data;
         }
     };
     ppu_io_reg[ PPUREG_ADDR ].read_handler = [ this ]() -> byte {
@@ -95,13 +109,12 @@ void ppu::init_io_register_handlers()
     };
 
     // $2007
-    // FIXME: how does this piece of shit actually work???
     ppu_io_reg[ PPUREG_DATA ].write_handler = [ this ]( byte data ) {
-        mwrite( vram_addr, data );
-        vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
+        mwrite( vram_addr.data, data );
+        vram_addr.data += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
     };
     ppu_io_reg[ PPUREG_DATA ].read_handler = [ this ]() {
-        addr_t addr = vram_addr % 0x4000;
+        addr_t addr = vram_addr.data % 0x4000;
         byte   data;
 
         if ( addr >= 0x3F00 )
@@ -114,7 +127,7 @@ void ppu::init_io_register_handlers()
             data = mread( addr );
             std::swap( data_latch, data );
         }
-        vram_addr += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
+        vram_addr.data += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
         return data;
     };
 }

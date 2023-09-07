@@ -44,10 +44,23 @@ class ppu
 
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU internal regs. see: PPU scroll
-    addr_t vram_addr    = 0;
-    addr_t tmp_addr     = 0;
-    byte   finex_scroll = 0;
-    bool   write_toggle = false;
+    union vram_addr_t {
+        uint16_t data;
+        struct
+        {
+            uint8_t coarse_x : 5;
+            uint8_t coarse_y_l : 3;
+            uint8_t coarse_y_h : 2;
+            uint8_t nametable_select : 2;
+            uint8_t fine_y : 3;
+            uint8_t unused : 1;
+        } __attribute__( ( packed ) );
+    };
+    vram_addr_t vram_addr;
+    vram_addr_t tmp_addr;
+    byte        finex_scroll = 0;
+    bool        write_toggle = false;
+
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Register Set. https://www.nesdev.org/wiki/PPU_registers
     using reg_read_behavior  = std::function<byte()>;
@@ -63,6 +76,11 @@ class ppu
             reg_data = data;
         };
     } ppu_io_reg[ 8 ];
+
+    uint16_t bg_pattern_shift_l;
+    uint16_t bg_pattern_shift_h;
+    uint8_t  bg_attribute_shift_l;
+    uint8_t  bg_attribute_shift_h;
 
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Memory. https://www.nesdev.org/wiki/PPU_memory_map
@@ -91,9 +109,30 @@ class ppu
     ~ppu() = default;
 
     ////////////////////////////////////////////////////////////////////////////////////////
-    // PPU Memory
+    // PPU Step
     void step( uint32_t *vmem );
 
+    // =====================================================================================
+    // PPU Register Translation
+    struct ppu_mask_reg_t
+    {
+        bool grayscale;
+        bool show_left_8_pix_bg;
+        bool show_left_8_pix_sp;
+        bool show_bg;
+        bool show_sp;
+        bool empasize_red;
+        bool empasize_green;
+        bool empasize_blue;
+    };
+    bool is_mask_show_bg()
+    {
+        return reinterpret_cast<ppu_mask_reg_t &>( ppu_io_reg ).show_bg;
+    };
+    bool is_mask_show_sp()
+    {
+        return reinterpret_cast<ppu_mask_reg_t &>( ppu_io_reg ).show_sp;
+    };
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Render
     void render_bg( uint32_t *vmem );

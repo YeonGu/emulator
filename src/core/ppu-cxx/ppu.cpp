@@ -96,8 +96,12 @@ ppu::ppu( uint8_t *chr_rom, int screen_arrangement )
 uint8_t &ppu::map_addr( uint16_t addr )
 {
     addr %= 0x4000;
-    if ( addr >= 0x3F00 ) // Pallete index
+    if ( addr >= 0x3F00 )
+    {
+        // Pallete index
+        printf( "write to palete %04x\n", addr );
         return *palette_map[ addr % 0x20 ];
+    }
     else if ( addr >= 0x3000 ) // Mirrors
         return reinterpret_cast<uint8_t &>( *( pattern_tables.pattern_table_0 + addr - 0x1000 ) );
     if ( addr < 0x2000 ) // Pattern table

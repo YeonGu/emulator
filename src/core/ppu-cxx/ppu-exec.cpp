@@ -7,14 +7,25 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
+#include <cstdio>
 #include <ppu.h>
 
 void cpu_call_nmi(); // in cpu_exec.cpp, call the NMI interrupt
 void ppu::step( uint32_t *vmem )
 {
+    //    printf( "ppu step\n" );
+    //    if ( frame_cnt == 50 )
+    //        printf( "scanline=%d, cyc=%d\n", scanline, line_cycle );
+    auto update_registers = [ & ]() {
+        bg_pattern_shift_l <<= 1;
+        bg_pattern_shift_h <<= 1;
+        bg_attribute_shift_l <<= 1;
+        bg_attribute_shift_h <<= 1;
+    };
+
     // =============================================================================
     // Increment the background tile "pointer" one tile/column horizontally.
-    auto increment_coarse_x = [ & ]() {
+    auto increment_scroll_x = [ & ]() {
         if ( ( vram_addr.data & 0x001F ) == 31 ) // if coarse X == 31
         {
             vram_addr.data &= ~0x001F; // coarse X = 0
@@ -52,35 +63,150 @@ void ppu::step( uint32_t *vmem )
         return 0x23C0 | ( vram_addr.data & 0x0C00 ) | ( ( vram_addr.data >> 4 ) & 0x38 ) | ( ( vram_addr.data >> 2 ) & 0x07 );
     };
 
-    if ( ( scanline == -1 ) && ( line_cycle == 339 ) && ( frame_cnt % 2 ) ) // skip the last pixel in odd frame
-        line_cycle++;
-    else if ( scanline >= 0 && scanline <= 239 ) // Visible-render
+    // Load pattern data (h & l)
+    // vram_addr -> nametable data (pattern index) -> pattern data
+    auto load_pattern_data = [ & ]() {
+        // Pattern table index in nametable
+        auto   nt       = mread( get_tile_address() );
+        addr_t pat_addr = (addr_t) nt << 4;
+        pat_addr |= ( get_reg_data( PPUREG_CTRL ) & 0x10 ) ? 0x1000 : 0;
+        pat_addr |= vram_addr.fine_y;
+
+        bg_next_pattern_l = mread( pat_addr );
+        bg_next_pattern_h = mread( pat_addr + 8 );
+    };
+
+    // Load Attribute data
+    // vram_addr -> attribute data -> bg_next_attribute latch
+    auto load_attribute_data = [ & ]() {
+        bg_next_attribute = mread( get_attribute_address() );
+        if ( vram_addr.coarse_x & 0x02 ) bg_next_attribute >> 2;
+        if ( vram_addr.coarse_y_l & 0x02 ) bg_next_attribute >> 4;
+        bg_next_attribute &= 0x03;
+    };
+
+    auto load_bg_shifters = [ & ]() {
+        bg_pattern_shift_l &= 0xFF00;
+        bg_pattern_shift_h &= 0xFF00;
+        bg_attribute_shift_l &= 0xFF00;
+        bg_attribute_shift_h &= 0xFF00;
+
+        bg_pattern_shift_l |= bg_next_pattern_l;
+        bg_pattern_shift_h |= bg_next_pattern_h;
+        bg_attribute_shift_l |= ( bg_next_attribute & 0x01 ) ? 0xFF : 0;
+        bg_attribute_shift_h |= ( bg_next_attribute & 0x02 ) ? 0xFF : 0;
+    };
+    auto reset_vram_horizon = [ & ]() {
+        vram_addr.coarse_x = tmp_addr.coarse_x;
+    };
+    auto reset_vram_vertical = [ & ]() {
+        vram_addr.coarse_y_l = tmp_addr.coarse_y_l;
+        vram_addr.coarse_y_h = tmp_addr.coarse_y_h;
+    };
+
+    // During Pre-render and Visible scanlines
+    if ( scanline >= -1 && scanline <= 239 )
     {
-        if ( !line_cycle )
-            int a = 0;
-        else if ( line_cycle <= 256 )
+        //        printf( "scanline=%d\n", scanline );
+        // Skip one cycle when BG+0+odd
+        if ( scanline == 0 && line_cycle == 0 && ( frame_cnt % 2 ) )
         {
-            int offset     = scanline * 256 + line_cycle - 1;
-            vmem[ offset ] = get_bg_color( line_cycle - 1, scanline );
+            line_cycle = 1;
+        }
+        // Clear VBlank Flag
+        if ( scanline == -1 && line_cycle == 1 )
+        {
+            reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 0;
+        }
+
+        // PPU render loop.
+        // The cycle 0 does no operations to registers.
+        // So the register operation happens from cycle 2. (pixel 2)
+        if ( ( line_cycle >= 2 && line_cycle <= 256 ) || ( line_cycle >= 321 && line_cycle <= 338 ) )
+        {
+            update_registers();
+
+            switch ( ( line_cycle - 1 ) % 8 )
+            {
+            case 1:
+                load_pattern_data();
+                break;
+            case 2:
+                load_attribute_data();
+                break;
+            case 7:
+                increment_scroll_x();
+                break;
+            case 0:
+                load_bg_shifters();
+                break;
+            default:
+                break;
+            }
+        }
+
+        if ( line_cycle == 257 )
+        {
+            increment_y();
+            reset_vram_horizon();
+        }
+
+        // During the Pre-render scanline,Reset vertical address during [280, 304]
+        if ( ( scanline == -1 ) && ( line_cycle >= 280 ) && ( line_cycle <= 304 ) )
+            reset_vram_vertical();
+
+        // Render!
+        if ( ( scanline >= 0 ) && ( line_cycle <= 256 ) )
+        {
+            uint8_t pattern         = ( bg_pattern_shift_h >> 14 & 0x2 ) | ( bg_pattern_shift_l >> 15 );
+            uint8_t palette_section = ( bg_attribute_shift_h >> 14 & 0x2 ) | ( bg_attribute_shift_l >> 15 );
+
+            int  offset    = scanline * 256 + line_cycle - 1;
+            auto col       = get_bg_palette_color( palette_section * 4 + pattern );
+            vmem[ offset ] = col;
         }
     }
-    else if ( scanline == 241 && line_cycle == 1 )
+    if ( scanline == 241 && line_cycle == 1 )
     {
-        reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 1;
-        if ( reinterpret_cast<ppuctrl_flag_t &>( get_reg_data( PPUREG_CTRL ) ).nmi_enable )
-        { // During Frame 0, 1, NMI is disabled.
+        set_ppu_nmi( true );
+        if ( is_ppu_nmi_enable() )
             cpu_call_nmi();
-        }
-    }
-    else if ( scanline == 260 && line_cycle == 332 ) // The VBL flag ($2002.7) is cleared by the PPU around 2270 CPU clocks
-    {                                                //        after NMI occurs. (vbl clear time test)
-        reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 0;
     }
 
-    // status update
-    if ( line_cycle == 340 )
-        scanline = ( scanline == 260 ) ? -1 : scanline + 1;
-    if ( line_cycle == 340 && ( scanline == 260 ) )
-        frame_cnt++;
+    scanline += ( line_cycle == 340 ) ? 1 : 0;
+    scanline   = ( scanline > 260 ) ? -1 : scanline;
     line_cycle = ( line_cycle == 340 ) ? 0 : line_cycle + 1;
+    if ( scanline == -1 && line_cycle == 0 )
+        frame_cnt++;
+    //    if ( ( scanline == -1 ) && ( line_cycle == 339 ) && ( frame_cnt % 2 ) ) // skip the last pixel in odd frame
+    //        line_cycle++;
+    //    else if ( scanline >= 0 && scanline <= 239 ) // Visible-render
+    //    {
+    //        if ( !line_cycle )
+    //            int a = 0;
+    //        else if ( line_cycle <= 256 )
+    //        {
+    //            int offset     = scanline * 256 + line_cycle - 1;
+    //            vmem[ offset ] = get_bg_color( line_cycle - 1, scanline );
+    //        }
+    //    }
+    //    else if ( scanline == 241 && line_cycle == 1 )
+    //    {
+    //        reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 1;
+    //        if ( reinterpret_cast<ppuctrl_flag_t &>( get_reg_data( PPUREG_CTRL ) ).nmi_enable )
+    //        { // During Frame 0, 1, NMI is disabled.
+    //            cpu_call_nmi();
+    //        }
+    //    }
+    //    else if ( scanline == 260 && line_cycle == 332 ) // The VBL flag ($2002.7) is cleared by the PPU around 2270 CPU clocks
+    //    {                                                //        after NMI occurs. (vbl clear time test)
+    //        reinterpret_cast<ppustatus_flag_t &>( get_reg_data( PPUREG_STATUS ) ).nmi_flag = 0;
+    //    }
+    //
+    //    // status update
+    //    if ( line_cycle == 340 )
+    //        scanline = ( scanline == 260 ) ? -1 : scanline + 1;
+    //    if ( line_cycle == 340 && ( scanline == 260 ) )
+    //        frame_cnt++;
+    //    line_cycle = ( line_cycle == 340 ) ? 0 : line_cycle + 1;
 }

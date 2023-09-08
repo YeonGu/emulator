@@ -79,8 +79,12 @@ class ppu
 
     uint16_t bg_pattern_shift_l;
     uint16_t bg_pattern_shift_h;
-    uint8_t  bg_attribute_shift_l;
-    uint8_t  bg_attribute_shift_h;
+    uint16_t bg_attribute_shift_l;
+    uint16_t bg_attribute_shift_h;
+
+    uint8_t bg_next_pattern_l;
+    uint8_t bg_next_pattern_h;
+    uint8_t bg_next_attribute;
 
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Memory. https://www.nesdev.org/wiki/PPU_memory_map

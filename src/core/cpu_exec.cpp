@@ -105,6 +105,9 @@ void cpu_exec_once( FILE *file )
 
 void cpu_call_nmi()
 {
+    if ( !is_ppu_nmi_enable() )
+        return;
+    
     STACK_PUSH_( cpu.pc >> 8 );
     STACK_PUSH_( cpu.pc );
     nr_cycles += 4;

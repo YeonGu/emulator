@@ -27,7 +27,8 @@ void ppu::init_io_register_handlers()
         //        tmp_addr.data &= 0x3FF;
         //        tmp_addr.data |= data & 0x3 << 10;
         ppu_io_reg[ PPUREG_CTRL ].reg_data = data;
-        tmp_addr.nametable_select          = data & 0x3;
+        tmp_addr.nametable_x               = data & 0x1;
+        tmp_addr.nametable_y               = data & 0x2 >> 1;
     };
 
     ppu_io_reg[ PPUREG_CTRL ].read_handler = [ this ]() -> byte {
@@ -35,6 +36,10 @@ void ppu::init_io_register_handlers()
     };
 
     // $2001 MASK > write
+    ppu_io_reg[ PPUREG_MASK ].write_handler = [ this ]( byte data ) {
+        //        printf( "write to PPUmask %02x\n", data );
+        ppu_io_reg[ PPUREG_MASK ].reg_data = data;
+    };
     ppu_io_reg[ PPUREG_MASK ].read_handler = [ this ]() -> byte {
         return ppu_iobus_value;
     };
@@ -102,6 +107,7 @@ void ppu::init_io_register_handlers()
             tmp_addr.data &= 0xFF00;
             tmp_addr.data |= data;
             vram_addr.data = tmp_addr.data;
+            //            printf( "EDIT ADDR = %04x\n", vram_addr.data );
         }
     };
     ppu_io_reg[ PPUREG_ADDR ].read_handler = [ this ]() -> byte {
@@ -110,10 +116,12 @@ void ppu::init_io_register_handlers()
 
     // $2007
     ppu_io_reg[ PPUREG_DATA ].write_handler = [ this ]( byte data ) {
+        //        printf( "%d | WRITE %04x = %02x\n", scanline, vram_addr.data, data );
         mwrite( vram_addr.data, data );
         vram_addr.data += reinterpret_cast<ppuctrl_flag_t &>( ppu_io_reg[ PPUREG_CTRL ].reg_data ).vram_inc ? 32 : 1;
     };
     ppu_io_reg[ PPUREG_DATA ].read_handler = [ this ]() {
+        //        printf( "READ %04x\n", vram_addr.data );
         addr_t addr = vram_addr.data % 0x4000;
         byte   data;
 

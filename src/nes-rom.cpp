@@ -51,7 +51,7 @@ int  read_rom_mapper( int argc, char **argv )
     //    rom_file = "../rom-test/cpu_interrupts_v2/rom_singles/1-cli_latency.nes"; // FIXME APU...
     //    rom_file = "../rom-test/instr_test-v5/rom_singles/04-zero_page.nes"; // FIXME
 
-    rom_file = "../rom-fix/nestest.nes"; // pass
+    //    rom_file = "../rom-fix/nestest.nes"; // pass
     //    rom_file = "../rom-test/ppu/palette_ram.nes"; // pass
     //    rom_file = "../rom-test/ppu/vbl_clear_time.nes"; // pass
     //    rom_file = "../rom-test/ppu/vram_access.nes";
@@ -61,7 +61,7 @@ int  read_rom_mapper( int argc, char **argv )
     //    rom_file = "../rom/pacman.nes";
     //    rom_file = "../rom/circus.nes";
     //    rom_file = "../rom/Donkey Kong (Japan).nes";
-    //    rom_file = "../rom/mario.nes";
+    rom_file = "../rom/mario.nes";
 
     if ( argc == 1 )
         printf( "No file target is given. Use the default mario file.\n" );

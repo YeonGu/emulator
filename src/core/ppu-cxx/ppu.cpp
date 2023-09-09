@@ -99,7 +99,7 @@ uint8_t &ppu::map_addr( uint16_t addr )
     if ( addr >= 0x3F00 )
     {
         // Pallete index
-        printf( "write to palete %04x\n", addr );
+        //        printf( "write to palete %04x\n", addr );
         return *palette_map[ addr % 0x20 ];
     }
     else if ( addr >= 0x3000 ) // Mirrors

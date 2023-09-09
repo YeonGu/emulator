@@ -51,7 +51,8 @@ class ppu
             uint8_t coarse_x : 5;
             uint8_t coarse_y_l : 3;
             uint8_t coarse_y_h : 2;
-            uint8_t nametable_select : 2;
+            uint8_t nametable_x : 1;
+            uint8_t nametable_y : 1;
             uint8_t fine_y : 3;
             uint8_t unused : 1;
         } __attribute__( ( packed ) );
@@ -76,6 +77,27 @@ class ppu
             reg_data = data;
         };
     } ppu_io_reg[ 8 ];
+    // =====================================================================================
+    // PPU Register Translation
+    struct ppu_mask_reg_t
+    {
+        uint8_t grayscale : 1;
+        uint8_t show_left_8_pix_bg : 1;
+        uint8_t show_left_8_pix_sp : 1;
+        uint8_t show_bg : 1;
+        uint8_t show_sp : 1;
+        uint8_t empasize_red : 1;
+        uint8_t empasize_green : 1;
+        uint8_t empasize_blue : 1;
+    };
+    bool is_render_bg()
+    {
+        return reinterpret_cast<ppu_mask_reg_t &>( ppu_io_reg[ PPUREG_MASK ] ).show_bg;
+    };
+    bool is_render_sp()
+    {
+        return reinterpret_cast<ppu_mask_reg_t &>( ppu_io_reg[ PPUREG_MASK ] ).show_sp;
+    };
 
     uint16_t bg_pattern_shift_l;
     uint16_t bg_pattern_shift_h;
@@ -116,27 +138,6 @@ class ppu
     // PPU Step
     void step( uint32_t *vmem );
 
-    // =====================================================================================
-    // PPU Register Translation
-    struct ppu_mask_reg_t
-    {
-        bool grayscale;
-        bool show_left_8_pix_bg;
-        bool show_left_8_pix_sp;
-        bool show_bg;
-        bool show_sp;
-        bool empasize_red;
-        bool empasize_green;
-        bool empasize_blue;
-    };
-    bool is_mask_show_bg()
-    {
-        return reinterpret_cast<ppu_mask_reg_t &>( ppu_io_reg ).show_bg;
-    };
-    bool is_mask_show_sp()
-    {
-        return reinterpret_cast<ppu_mask_reg_t &>( ppu_io_reg ).show_sp;
-    };
     ////////////////////////////////////////////////////////////////////////////////////////
     // PPU Render
     void render_bg( uint32_t *vmem );

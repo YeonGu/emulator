@@ -44,7 +44,7 @@ void nes_mainloop()
 
 void test_loop()
 {
-    int test_times = 30;
+    int test_times = 35;
     while ( 1 )
     {
         int cyc = 29781;

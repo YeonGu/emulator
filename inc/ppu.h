@@ -77,6 +77,27 @@ class ppu
             reg_data = data;
         };
     } ppu_io_reg[ 8 ];
+
+  private:
+    using oam_addr_t = uint8_t;
+    struct ppu_oam_t
+    {
+        uint8_t y;
+        uint8_t tile_id;
+        uint8_t attributes;
+        uint8_t x;
+    } oam[ 64 ];
+    oam_addr_t *oam_entry = (oam_addr_t *) oam;
+    oam_addr_t  oam_addr;
+
+    ppu_oam_t sprite_scanline[ 8 ];
+    uint8_t   sprite_cnt = 0;
+    uint8_t   sp_pattern_shifter_lo[ 8 ];
+    uint8_t   sp_pattern_shifter_hi[ 8 ];
+
+    bool sp0_possible_rendered;
+    bool sp0_being_rendered;
+
     // =====================================================================================
     // PPU Register Translation
     struct ppu_mask_reg_t
@@ -129,6 +150,7 @@ class ppu
 
     uint32_t get_bg_palette_color( uint8_t index );
     uint32_t get_bg_color( int x, int y );
+    uint32_t get_fg_palette_color( uint8_t index );
 
   public:
     ppu( byte *chr_rom, int screen_arrangement );
@@ -150,6 +172,7 @@ class ppu
     friend void ppu_reg_write( int idx, byte data );
     friend byte ppu_reg_read( int idx );
     friend void test_loop();
+    friend void oamdma_write( byte dma_page );
 };
 
 extern ppu *ppu_inst;
@@ -169,7 +192,7 @@ enum ppu_reg_list
 //  C like interfaces
 void ppu_reg_write( int idx, byte data );
 byte ppu_reg_read( int idx );
-void oamdma_write( byte data );
+void oamdma_write( byte dma_page );
 byte oamdma_read();
 
 enum

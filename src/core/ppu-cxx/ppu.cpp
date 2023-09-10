@@ -122,24 +122,6 @@ void ppu::mwrite( addr_t addr, byte data )
 }
 
 extern byte ppu_iobus_value;
-void        ppu_reg_write( int idx, byte data )
-{
-    ppu_iobus_value = data;
-    ppu_inst->ppu_io_reg[ idx % 8 ].write_handler( data );
-}
-
-byte ppu_reg_read( int idx )
-{
-    return ppu_inst->ppu_io_reg[ idx % 8 ].read_handler();
-}
-
-void oamdma_write( byte data )
-{
-}
-byte oamdma_read()
-{
-    return 0;
-}
 
 uint32_t ppu::get_bg_palette_color( uint8_t index )
 {
@@ -152,6 +134,10 @@ uint32_t ppu::get_bg_palette_color( uint8_t index )
     }
     index = ( index % 4 == 0 ) ? 0 : index;
     return tines_stdpalette[ *palette_map[ index ] ].data;
+}
+uint32_t ppu::get_fg_palette_color( uint8_t index )
+{
+    return tines_stdpalette[ *palette_map[ index + 0x10 ] ].data;
 }
 
 void ppu::render_bg( uint32_t *vmem )

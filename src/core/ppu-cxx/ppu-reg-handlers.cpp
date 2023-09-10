@@ -7,11 +7,43 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
+#include "memory.h"
 #include <cstdio>
 #include <ppu.h>
 
 byte        ppu_iobus_value; // https://www.nesdev.org/wiki/Open_bus_behavior
 static byte data_latch;
+
+void ppu_reg_write( int idx, byte data )
+{
+    ppu_iobus_value = data;
+    ppu_inst->ppu_io_reg[ idx % 8 ].write_handler( data );
+}
+
+byte ppu_reg_read( int idx )
+{
+    return ppu_inst->ppu_io_reg[ idx % 8 ].read_handler();
+}
+
+///////////////////////////////////////
+// $4014 OAM DMA
+void cpu_suspend( int suspend_cyc );
+void oamdma_write( byte dma_page )
+{
+    addr_t vaddr = (addr_t) dma_page << 8;
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        ppu_inst->oam_entry[ ppu_inst->oam_addr ] = vaddr_read( vaddr );
+        ppu_inst->oam_addr++;
+        vaddr++;
+    }
+    cpu_suspend( 513 );
+}
+byte oamdma_read()
+{
+    return 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // PPU internal regs. see: PPU scroll (From ppu.h)
@@ -56,12 +88,24 @@ void ppu::init_io_register_handlers()
         return data;
     };
 
-    // $2003
+    ///////////////////////////////////////////////////////////////////////////////////
+    // $2003 OAM Address >write
     ppu_io_reg[ PPUREG_OAMADDR ].write_handler = [ this ]( byte data ) {
-        ppu_io_reg[ PPUREG_OAMADDR ].reg_data = data;
+        oam_addr = ( ppu_io_reg[ PPUREG_OAMADDR ].reg_data = data );
     };
     ppu_io_reg[ PPUREG_OAMADDR ].read_handler = [ this ]() -> byte {
         return ppu_iobus_value;
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////////
+    // $2004 OAM Data <> read / write
+    // Write OAM data here. Writes will increment OAMADDR after the write; reads do not.
+    ppu_io_reg[ PPUREG_OAMDATA ].write_handler = [ this ]( byte data ) -> void {
+        oam_entry[ oam_addr ] = data;
+        oam_addr++;
+    };
+    ppu_io_reg[ PPUREG_OAMDATA ].read_handler = [ this ]() -> byte {
+        return oam_entry[ oam_addr ];
     };
 
     // $2005 SCROLL >> write x2

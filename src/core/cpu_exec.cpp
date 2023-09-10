@@ -48,6 +48,10 @@ void cpu_step()
         return;
     cpu_exec_once( nullptr );
 }
+void cpu_suspend( int suspend_cyc )
+{
+    nr_cycles += suspend_cyc;
+};
 
 void         cpu_decode_exec( uint8_t opcode );
 static char  itrace_log[ 64 ];
@@ -107,7 +111,7 @@ void cpu_call_nmi()
 {
     if ( !is_ppu_nmi_enable() )
         return;
-    
+
     STACK_PUSH_( cpu.pc >> 8 );
     STACK_PUSH_( cpu.pc );
     nr_cycles += 4;

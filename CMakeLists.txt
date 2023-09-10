@@ -13,7 +13,7 @@ include_directories(inc)
 include_directories(${SDL2_LIB_DIR}/include)
 
 add_compile_options(-lSDL2 -lm -ldl)
-
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 add_executable(emulator
         inc/rom.h
         src/main.cpp

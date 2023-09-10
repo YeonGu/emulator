@@ -55,6 +55,7 @@ int  read_rom_mapper( int argc, char **argv )
     //    rom_file = "../rom-test/ppu/palette_ram.nes"; // pass
     //    rom_file = "../rom-test/ppu/vbl_clear_time.nes"; // pass
     //    rom_file = "../rom-test/ppu/vram_access.nes";
+    //    rom_file = "../rom-test/ppu/sprite_ram.nes";
     //    rom_file = "../rom-fix/test_cpu_flag_concurrency.nes"; // pass
     //    rom_file = "../rom/f1.nes";
     //    rom_file = "../rom/kungfu.nes";

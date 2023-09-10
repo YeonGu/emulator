@@ -8,11 +8,11 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include <SDL2/SDL.h>
+#include <chrono>
 #include <cpu.h>
 #include <cstdio>
 #include <input_manager.h>
 #include <ppu.h>
-// #include <ppu-reg.h>
 
 void cpu_call_nmi();
 int  sdl_test();
@@ -45,8 +45,21 @@ void nes_mainloop()
 void test_loop()
 {
     int test_times = 35;
+
+    auto get_time_us = []() -> uint64_t {
+        auto     now  = std::chrono::system_clock::now().time_since_epoch();
+        uint64_t time = std::chrono::duration_cast<std::chrono::microseconds>( now ).count();
+        return time;
+    };
+
+    uint64_t last_time;
     while ( 1 )
     {
+        last_time = get_time_us();
+        while ( get_time_us() - last_time < 1000 / 60 * 1000 )
+            ;
+        last_time = get_time_us();
+
         int cyc = 29781;
         while ( cyc-- )
         {

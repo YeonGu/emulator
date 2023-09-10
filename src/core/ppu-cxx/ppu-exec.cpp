@@ -215,8 +215,8 @@ void ppu::step( uint32_t *vmem )
     int      pix_offset = scanline * 256 + line_cycle - 1;
     if ( is_render_bg() && ( scanline >= 0 && scanline <= 239 ) && ( line_cycle <= 256 ) && line_cycle > 0 )
     {
-        bg_pixel                = ( bg_pattern_shift_h >> 14 & 0x2 ) | ( bg_pattern_shift_l >> 15 );
-        uint8_t palette_section = ( bg_attribute_shift_h >> 14 & 0x2 ) | ( bg_attribute_shift_l >> 15 );
+        bg_pixel                = ( bg_pattern_shift_h >> ( 14 - finex_scroll ) & 0x2 ) | ( bg_pattern_shift_l >> ( 15 - finex_scroll ) & 0x1 );
+        uint8_t palette_section = ( bg_attribute_shift_h >> ( 14 - finex_scroll ) & 0x2 ) | ( bg_attribute_shift_l >> ( 15 - finex_scroll ) & 0x1 );
 
         auto col    = get_bg_palette_color( palette_section * 4 + bg_pixel );
         final_pixel = col;

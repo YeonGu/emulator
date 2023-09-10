@@ -62,12 +62,12 @@ void init_input_manager()
     keyboard_mapping( SDLK_d, NES_Right );
     keyboard_mapping( SDLK_s, NES_Down );
 
-    keyboard_mapping( SDLK_o, NES_A );
-    keyboard_mapping( SDLK_p, NES_A );
+    keyboard_mapping( SDLK_j, NES_A );
+    //    keyboard_mapping( SDLK_p, NES_A );
 
     keyboard_mapping( SDLK_k, NES_B );
     keyboard_mapping( SDLK_l, NES_B );
 
-    keyboard_mapping( SDLK_n, NES_Start );
-    keyboard_mapping( SDLK_m, NES_Select );
+    keyboard_mapping( SDLK_i, NES_Start );
+    keyboard_mapping( SDLK_u, NES_Select );
 }

@@ -92,6 +92,7 @@ class mmu
     }
 };
 
+void init_mmu();
 mmu<uint16_t, uint8_t> *get_mmu();
 
 #endif // EMULATOR_MMU_H

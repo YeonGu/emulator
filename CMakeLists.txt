@@ -12,7 +12,7 @@ endif ()
 include_directories(inc)
 include_directories(${SDL2_LIB_DIR}/include)
 
-add_compile_options(-lSDL2 -lm -ldl)
+add_compile_options(-lSDL2 -lm -ldl --static)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 add_executable(emulator
         inc/rom.h
@@ -50,5 +50,5 @@ add_executable(emulator
 if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dylib ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)
 elseif (CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
-    target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dll.a ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)
+    target_link_libraries(emulator -static ${SDL2_LIB_DIR}/lib/libSDL2.dll.a ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)
 endif ()

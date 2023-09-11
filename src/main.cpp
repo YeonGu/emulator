@@ -14,10 +14,13 @@
 #include <cstdlib>
 #include <iostream>
 
-void init_memory();
+void  init_memory();
+char *rom_path = nullptr;
 
 int main( int argc, char *argv[] )
 {
+    if ( argc >= 2 )
+        rom_path = argv[ 1 ];
     if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 )
     {
         printf( "SDL初始化失败: %s\n", SDL_GetError() );

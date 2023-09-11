@@ -43,6 +43,8 @@ uint8_t *get_chr_rom( int idx )
     return chr_rom;
 }
 
+extern char *rom_path;
+
 void read_rom_info();
 int  read_rom_mapper( int argc, char **argv )
 {
@@ -62,7 +64,14 @@ int  read_rom_mapper( int argc, char **argv )
     //    rom_file = "../rom/pacman.nes";
     //    rom_file = "../rom/circus.nes";
     //    rom_file = "../rom/Donkey Kong (Japan).nes";
-    rom_file = "../rom/mario.nes";
+    if ( !rom_path )
+    {
+        rom_file = "rom/mario.nes";
+    }
+    else
+    {
+        rom_file = rom_path;
+    }
 
     if ( argc == 1 )
         printf( "No file target is given. Use the default mario file.\n" );

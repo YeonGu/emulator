@@ -28,8 +28,6 @@ void scan_input()
 
 void init_input_manager()
 {
-    joy[0] = joystick();
-    joy[1] = joystick();
 
     joy[0].keyboard_mapping( SDLK_w, NES_Up );
     joy[0].keyboard_mapping( SDLK_a, NES_Left );
@@ -52,4 +50,6 @@ void init_input_manager()
                     std::bind(&joystick::get_key_shift_reg_lsb,&joy[1],std::placeholders::_1),
                     std::bind(&joystick::ready_to_get_shift_reg,&joy[1],std::placeholders::_1,std::placeholders::_2)
     );
+
+    joy[0].enable_joystick_input(0);
 }

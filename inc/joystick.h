@@ -55,13 +55,33 @@ public:
         keyboard_to_joystick[ keyCode ] = gamepadCode;
     }
 
+    void enable_joystick_input(int index)
+    {
+        if( SDL_NumJoysticks() < 1 )
+        {
+            printf( "No joysticks connected!\n" );
+        }
+        else
+        {
+            printf("Found joysticks!\n");
+            auto gGameController = SDL_JoystickOpen( index );
+            if( gGameController == nullptr )
+            {
+                printf( "Warning: Unable to open game controller! SDL Error: %s\n", SDL_GetError() );
+            }
+        }
+    }
+
     joystick& operator<<(SDL_Event& event)
     {
-        if ( event.type == SDL_KEYDOWN || event.type == SDL_KEYUP )
+        if ( event.type == SDL_KEYDOWN || event.type == SDL_KEYUP || event.type == SDL_JOYAXISMOTION )
         {
             if ( event.key.keysym.sym >= 256 || keyboard_to_joystick[ event.key.keysym.sym ] < 0 ) return *this;
             key_shift_reg &= ~( 1 << keyboard_to_joystick[ event.key.keysym.sym ] );
             key_shift_reg |= ( event.type == SDL_KEYDOWN ? 1 : 0 ) << keyboard_to_joystick[ event.key.keysym.sym ];
+        }else if(event.type == SDL_JOYBALLMOTION | event.type == SDL_JOYHATMOTION)
+        {
+            printf("joysti");
         }
         return *this;
     }

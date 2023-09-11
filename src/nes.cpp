@@ -53,6 +53,7 @@ void test_loop()
     };
 
     uint64_t last_time;
+
     while ( 1 )
     {
         last_time = get_time_us();
@@ -90,11 +91,7 @@ void test_loop()
 int sdl_test()
 {
     // 初始化SDL
-    if ( SDL_Init( SDL_INIT_VIDEO ) < 0 )
-    {
-        printf( "SDL初始化失败: %s\n", SDL_GetError() );
-        return 1;
-    }
+
 
     // 创建窗口
     SDL_Window *sdlwindow = SDL_CreateWindow(

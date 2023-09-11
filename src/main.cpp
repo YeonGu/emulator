@@ -18,6 +18,12 @@ void init_memory();
 
 int main( int argc, char *argv[] )
 {
+    if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 )
+    {
+        printf( "SDL初始化失败: %s\n", SDL_GetError() );
+        return 1;
+    }
+
     init_mmu();
     init_input_manager();
 

@@ -46,8 +46,9 @@ void      sdl_audio_callback( void *userdata, Uint8 *stream, int len )
 
     for ( int i = 0; i < length; i++ )
     {
-        double time = static_cast<double>( i ) / AUDIO_SAMPLE_RATE + t;
-        audio[ i ]  = static_cast<Sint16>( AUDIO_AMP * sin( t * 2.0 * 3.14159 * 440 ) );
+        static double pos;
+        pos += 1.0 / AUDIO_SAMPLE_RATE;
+        audio[ i ] = static_cast<Sint16>( AUDIO_AMP * sin( pos * 2.0 * 3.14159 * 440 ) );
         angle += increment;
     }
 }
@@ -71,7 +72,7 @@ int main( int argc, char *argv[] )
     desiredSpec.callback = sdl_audio_callback;
     desiredSpec.userdata = nullptr;
     //        SDL_AudioDriverName( "directsound" );
-
+    SDL_PauseAudio( 0 );
     if ( SDL_OpenAudio( &desiredSpec, &obtainedSpec ) != 0 )
     {
         std::cout << "Failed to open audio device: " << SDL_GetError() << std::endl;

@@ -41,6 +41,8 @@ enum DUALSHOCK4
     DS4_TOUCHBAR = 15,
 };
 
+#define DualShock 0
+#define Xbox 1
 
 class joystick
 {
@@ -50,12 +52,25 @@ private:
     uint8_t       key_shift_reg = 0;
     uint8_t       key_shift_reg_copy;
     int8_t joystick_index;
+    int joy_type;
     int  reg_bit;
 
-    void phy_joystick_mapping(DUALSHOCK4 ds4_key,joystick_code joystickCode)
+    void phy_joystick_mapping(int8_t ds4_key,joystick_code joystickCode)
     {
         phy_joystick_to_joystick[ds4_key] = joystickCode;
     }
+
+    void set_shift_reg(int bit,uint8_t value)
+    {
+        key_shift_reg &= ~(1 << bit);
+        key_shift_reg |= !!value << bit;
+    }
+
+    uint8_t get_shift_reg(int bit)
+    {
+        return key_shift_reg >> bit & 0x1;
+    }
+
 
 public:
     joystick(){
@@ -85,7 +100,7 @@ public:
         keyboard_to_joystick[ keyCode ] = gamepadCode;
     }
 
-    void enable_joystick_input(int8_t index)
+    void enable_joystick_input(int8_t index,int joy_type = DualShock)
     {
         if( SDL_NumJoysticks() < 1 )
         {
@@ -102,30 +117,59 @@ public:
         }
         joystick_index = index;
 
-        phy_joystick_mapping(DS4_Up,NES_Up);
-        phy_joystick_mapping(DS4_Down,NES_Down);
-        phy_joystick_mapping(DS4_Left,NES_Left);
-        phy_joystick_mapping(DS4_Right,NES_Right);
-        phy_joystick_mapping(DS4_SHARE,NES_Start);
-        phy_joystick_mapping(DS4_OPTHIONS,NES_Select);
-        phy_joystick_mapping(DS4_X,NES_A);
-        phy_joystick_mapping(DS4_O,NES_B);
+        this->joy_type = joy_type;
+
+        switch (joy_type) {
+            case DualShock:
+                phy_joystick_mapping(DS4_Up, NES_Up);
+                phy_joystick_mapping(DS4_Down, NES_Down);
+                phy_joystick_mapping(DS4_Left, NES_Left);
+                phy_joystick_mapping(DS4_Right, NES_Right);
+                phy_joystick_mapping(DS4_SHARE, NES_Start);
+                phy_joystick_mapping(DS4_OPTHIONS, NES_Select);
+                phy_joystick_mapping(DS4_X, NES_A);
+                phy_joystick_mapping(DS4_O, NES_B);
+                break;
+            case Xbox:
+                phy_joystick_mapping(0,NES_A);
+                phy_joystick_mapping(1,NES_B);
+
+                phy_joystick_mapping(2,NES_Up);
+                phy_joystick_mapping(3,NES_Right);
+                phy_joystick_mapping(5,NES_Down);
+                phy_joystick_mapping(9,NES_Left);
+                break;
+            default:
+
+                break;
+        }
     }
 
     joystick& operator<<(SDL_Event& event)
     {
         if ( event.type == SDL_KEYDOWN || event.type == SDL_KEYUP || event.type == SDL_JOYAXISMOTION )
         {
-            if ( event.key.keysym.sym >= 256 || keyboard_to_joystick[ event.key.keysym.sym ] < 0 ) return *this;
-            key_shift_reg &= ~( 1 << keyboard_to_joystick[ event.key.keysym.sym ] );
-            key_shift_reg |= ( event.type == SDL_KEYDOWN ? 1 : 0 ) << keyboard_to_joystick[ event.key.keysym.sym ];
-        }else if (event.type == SDL_JOYBUTTONDOWN | event.type == SDL_JOYBUTTONUP)
+            if ( event.key.keysym.sym >= 256 || keyboard_to_joystick[ event.key.keysym.sym ] < 0 )
+                return *this;
+            set_shift_reg(keyboard_to_joystick[ event.key.keysym.sym ],event.type == SDL_KEYDOWN);
+        }else if (event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP || event.type == SDL_JOYHATMOTION)
         {
-            if (event.jbutton.which != joystick_index | phy_joystick_to_joystick[event.jbutton.button] < 0)return *this;
-            printf("button %d is %d\n",event.jbutton.button,event.jbutton.state);
-
-            key_shift_reg &= ~( 1 << phy_joystick_to_joystick [ event.jbutton.button ] );
-            key_shift_reg |= event.jbutton.state << phy_joystick_to_joystick[ event.jbutton.button ];
+            if (event.jbutton.which != joystick_index | phy_joystick_to_joystick[event.jbutton.button] < 0)
+                return *this;
+            printf("button %d is %d\n",event.jhat.which,event.jhat.value);
+            if(joy_type == DualShock) {
+                set_shift_reg(phy_joystick_to_joystick[event.jbutton.button],event.jbutton.state);
+            }else if (joy_type == Xbox) {
+                if (event.type == SDL_JOYHATMOTION)
+                {
+                    for(int _bit = 0;_bit < 4;_bit++)
+                    {
+                        set_shift_reg(phy_joystick_to_joystick[(1 << _bit) + 1],(event.jbutton.state >> _bit) & 0x1);
+                    }
+                } else {
+                    set_shift_reg(phy_joystick_to_joystick[event.jbutton.which],event.jbutton.state);
+                }
+            }
         }
         return *this;
     }

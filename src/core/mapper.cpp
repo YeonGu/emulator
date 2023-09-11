@@ -18,8 +18,7 @@ addr_t RESET_VECTOR, NMI_VECTOR, IRQ_BRK_VECTOR;
 static uint8_t internal_ram[ 0x0800 ]; // $0x0800 2KiB internal RAM
 static uint8_t apu_io_reg[ 0x0014 ];   // FIXME: not implemented. move to APU module...
 static uint8_t apu_snd_chn;
-static uint8_t sram[ 0x2000 ];
-static uint8_t joystick[ 2 ];
+static uint8_t sram[ 0x2000 ];;
 
 /**
  * https://www.nesdev.org/wiki/CPU_memory_map
@@ -50,7 +49,7 @@ void init_mapper( struct nes_rom_info_t *info )
     NEW_MAP( "apu_registers", 0x4000, 0x0014, apu_io_reg );
     //    NEW_MAP( "oamdma", 0x4014, 1, &oamdma );
     NEW_MAP( "snd_chn", 0x4015, 1, &apu_snd_chn );
-    NEW_MAP( "joystick", 0x4016, 2, joystick );
+    //NEW_MAP( "joystick", 0x4016, 2, joystick );
 
     //////////////////////////////////////////////////////////////////////
     // TODO: other cpu_memory_mapper?

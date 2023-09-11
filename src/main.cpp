@@ -21,7 +21,13 @@ int main( int argc, char *argv[] )
 {
     if ( argc >= 2 )
         rom_path = argv[ 1 ];
+    if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 )
+    {
+        printf( "SDL初始化失败: %s\n", SDL_GetError() );
+        return 1;
+    }
 
+    init_mmu();
     init_input_manager();
 
     read_rom_mapper( argc, argv ); // Load ROM and INTERRUPT VECTORS ( nes_rom.c -> memory.c ); Init CPU cpu_memory_mapper

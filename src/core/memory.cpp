@@ -29,20 +29,18 @@ void init_memory()
         0x4014, nullptr, 1,
         []( uint16_t addr ) -> uint16_t { return oamdma_read(); },
         []( uint16_t addr, uint8_t data ) { oamdma_write( data ); } );
-    // gamepad
-    vmmu->mmap( 0x4016, nullptr, 1, get_key_shift_reg_lsb, ready_to_get_shift_reg );
 }
 
 uint8_t vaddr_read( addr_t addr )
 {
     //    if ( addr <= 0x2007 && addr >= 0x2000 )
     //        printf( "vaddr read %04x\n", addr );
-    return ( *get_mmu() )[ addr ];
+    return get_mmu()[0][ addr ];
 }
 
 void vaddr_write( addr_t addr, uint8_t data )
 {
     //    if ( addr <= 0x2007 && addr >= 0x2000 )
     //        printf( "vaddr write %04x\n", addr );
-    ( *get_mmu() )[ addr ] = data;
+    get_mmu()[0][ addr ] = data;
 }

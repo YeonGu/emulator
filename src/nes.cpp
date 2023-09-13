@@ -7,6 +7,7 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
+#include "apu.h"
 #include <SDL2/SDL.h>
 #include <chrono>
 #include <cpu.h>
@@ -42,6 +43,7 @@ void nes_mainloop()
     printf( "Exit NES mainloop.\n" );
 }
 
+APU *get_apu();
 void test_loop()
 {
     int test_times = 35;
@@ -53,10 +55,10 @@ void test_loop()
     };
 
     uint64_t last_time;
+    last_time = get_time_us();
 
     while ( 1 )
     {
-        last_time = get_time_us();
         while ( get_time_us() - last_time < 1000 / 60 * 1000 )
             ;
         last_time = get_time_us();
@@ -68,6 +70,7 @@ void test_loop()
             ppu_inst->step( vmem );
             ppu_inst->step( vmem );
             cpu_step();
+            get_apu()->tick();
         }
 
         SDL_UpdateTexture( texture, nullptr, vmem, 256 * sizeof( uint32_t ) );
@@ -91,7 +94,6 @@ void test_loop()
 int sdl_test()
 {
     // 初始化SDL
-
 
     // 创建窗口
     SDL_Window *sdlwindow = SDL_CreateWindow(

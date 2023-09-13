@@ -70,14 +70,21 @@ int  read_rom_mapper( int argc, char **argv )
     }
     else
     {
-        rom_file = rom_path;
+        rom_file = rom_path + 13;
     }
 
     if ( argc == 1 )
         printf( "No file target is given. Use the default mario file.\n" );
     FILE *file;
     file = fopen( rom_file, "rb+" );
-    assert( file );
+
+    if ( !file )
+    {
+        FILE *log_file = fopen( "tinyneslog.txt", "w+" );
+        fprintf_s( log_file, "ERROR: No valid file is given. the current argument: %s\nexe absolute path at %s", rom_file, _pgmptr );
+        fclose( log_file );
+        assert( 0 );
+    }
 
     // Check rom ident
     fread( &rom_hdr, sizeof( rom_hdr ), 1, file );

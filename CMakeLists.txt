@@ -47,7 +47,9 @@ add_executable(emulator
         src/core/ppu-cxx/ppu-exec.cpp
         inc/joystick.h
         inc/apu.h
-        src/core/apu.cpp)
+        src/core/APU/apu.cpp
+        inc/apu-regs.h
+        src/core/APU/pulse.cpp)
 
 if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(emulator ${SDL2_LIB_DIR}/lib/libSDL2.dylib ${SDL2_LIB_DIR}/lib/libSDL2main.a ${SDL2_LIB_DIR}/lib/libSDL2.a)

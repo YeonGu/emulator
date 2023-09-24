@@ -10,6 +10,8 @@
 #include <cstdint>
 #include <cstdio>
 #include <functional>
+#include <cmath>
+
 using addr_t = uint16_t;
 using byte   = uint8_t;
 
@@ -46,7 +48,7 @@ class pulse_channel
         double   freq;
         uint16_t timer;
         uint8_t  duty;
-    } next_info;
+    } next_info{.freq = NAN};
 
     bool const_vol;
 

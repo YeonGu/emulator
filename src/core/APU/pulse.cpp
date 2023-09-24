@@ -85,7 +85,10 @@ byte pulse_channel::get_next_sample()
 {
     auto reload_info = [ this ]() {
         cursor             = 0;
-        current_pulse.end  = static_cast<uint32_t>( ( 44100.0 / next_info.freq ) );
+        if(next_info.freq != NAN) [[likely]]
+            current_pulse.end  = static_cast<uint32_t>( ( 44100.0 / next_info.freq ) );
+        else [[unlikely]]
+            current_pulse.end = 0;
         current_pulse.rise = current_pulse.end / 2; // TODO: more duty...
     };
 

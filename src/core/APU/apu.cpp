@@ -23,7 +23,6 @@ APU *get_apu()
 }
 APU::APU()
 {
-    apu_inst = this;
     set_reg_handlers();
     channel_sampling.emplace_back( [ this ]() { return pulse1.get_next_sample(); } );
     channel_sampling.emplace_back( [ this ]() { return pulse2.get_next_sample(); } );

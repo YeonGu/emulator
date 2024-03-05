@@ -1,6 +1,6 @@
 # TiNES Emulator Core
 
-这是东南大学2023暑期学校课程设计作业的仓库。
+An NES emulator providing support for PROM.
 
 使用CMake+MinGW在windows上编译和构建。
 
